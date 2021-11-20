@@ -31,7 +31,7 @@
         \normalsize
         Submitted on: \today \\
         \vspace{2.5cm}
-        \large \textbf{at the University of Cologne in Corporation with AXA AG}
+        \large \textbf{at the University of Cologne}
         \vspace{3cm}
     \end{center}
     \normalsize{
@@ -41,8 +41,7 @@
             Postcode, Area: & {53332, Bornheim} \\
             Country: & {Germany} \\
             Matriculation number: & {736481} \\
-            Supervisors: & {Prof. Dr. Dominik Wied (University of Cologne),
-            Dr. Felix Schran (AXA AG)} \\
+            Supervisor: & {Prof. Dr. Dominik Wied} \\
         \end{tabular}\\
     }
     \vspace*{\fill}
@@ -61,6 +60,27 @@
 
 \section{Introduction} \par
 
+Predicting customer churn in order to retain customers has become one of the most important issues for companies. The goal is to estimate probabilities for a costumer churning in the next period of time, in order to be able to detect
+potential churners before they leave the company. To tackle this issue, more and more advanced Machine-Learning-Models are used guaranteeing high accuracy in their out-of-sample predictions. \\
+Fortunately for most of the companies, churn rates from one period to another are very small. However in classification models predicting a rare event can become challenging. In this so called "Imballanced Classes" issue certain arrangements to the underlying
+training data need be made. Without these arrangements and with highly imballanced classes, a poor algorithm will simply never predict the outcome of the minority class. In a dataset with 1000 customers containing 5 churners for example, this loss-minimizing
+algorithm would have an in-sample accuracy of 99.5\%. \\
+In order to tackle this issue there are many methods ranging from upsampling the minority class or downsampling the majority class to more advanced techniques. In this work we will
+present and compare the different methods while applying them to the underlying problem. \\
+We also want to emphasize (or not) the importance of using quotation data for predicting customer churn. A company can track (potential) customer behavior on their specific distribution
+channels. Nowadays, in most cases the products or services are offered online on websites, which makes it easy to track website visitor data.
+In the context of dealing with customer churn this data can be matched to the customers already having a product or contract of this company.
+We believe (?) that the number of visits of a current customer in the last period (?) plays a big role in predicting the probability of that customer leaving in the next period.
+(Coming from high correlation between Nvisits and churn)\\
+In order to evaluate the importance of not only the number of website visits but also the other explanatory variables there is typically a trade-off during model selection.
+The trade-off is between the model complexity or corresponding accuracy and the model interpretability. Deep neural networks or boosted trees belong to the complex models which are
+famous for their high accuracy in the fields of computer vision and natural language processing. Understanding and interpreting the model is of no big interest in these areas.
+But in the topic of this work and in many other areas understanding which variables lead to the resulting outcome of the model becomes desirable. The most transparent models in terms
+of interpretability are linear or logistic models. There the magnitude and sign of the corresponding coefficients (after being testet for significance) illustrate the
+changes of the outcome for a change in the specific explanatory variable. These models however lack in terms of accuracy when being compared to the comlex ones. In this work we will
+present the resulting accuracy and interpretability of "Explainable Boosting Machines" developped by (?). It aims to combine the high accuracy of complex models on the one hand and the
+interpretability of linear models on the other hand. \\
+
 \newpage
 
 \thispagestyle{empty}
@@ -68,4 +88,4 @@
 \section*{Bibliography}
 \vspace*{6mm}
 
-\end{document}
+\end{document}s
