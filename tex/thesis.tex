@@ -14,6 +14,8 @@
 \usepackage{amsfonts}
 \usepackage{mathrsfs}
 \usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{trees}
 \graphicspath{{./images/}}
 
 
@@ -92,10 +94,101 @@ high accuracy of complex models on the one hand and the interpretability of line
 
 \section{Data and Methodology} \par
 
-For this work we use customer data of a big insurance company. Due to data pretection the data is anonymized which does not
-affect the model accuracy and interpretability in any form. We focus on one product for this company, where customers close
-a deal to get the desired service. 
+\subsection{Understanding the Problem} \par
 
+For this work we use customer data from a big insurance company in Germany. Due to data pretection the data is anonymized which
+does not affect the model accuracy and interpretability in any form. We focus on the product of automobile liability insurance,
+which is by law a mandatory service every car owner must hold in Germany. \\
+Typically car owners close a deal with an insurance company which can be terminated by the end of each year. If the contract
+does not get terminated it is automatically extended for another year. In rare cases both sides agree on a contract with a due
+date during the year (We omit this case in this work). Besides the option to terminate the contract at the end of each year
+there is also an option to terminate it during the year under two circumstances:
+
+\begin{center}
+    \begin{tabular}{ll}
+        Event A: & Contractor causes an Accident. \\
+        Event N: & Contractor buys a new Car. \\
+    \end{tabular}
+\end{center}
+
+Therefore the problem of modelling customer churn needs to be seperated into the probability of a costumer leaving during the
+year and at the end of a year. In this work we will focus on predicting churns occuring during the year. Figure 1 (richtiger
+Verweis) illustrates how this probability on costumer level can be decomposed using the Events A (Accident), N (New Car) and
+C (Churn). \\
+
+% Set the overall layout of the tree
+\tikzstyle{level 1}=[level distance=5cm, sibling distance=3cm]
+\tikzstyle{level 2}=[level distance=5cm, sibling distance=2cm]
+
+% Define styles for bags and leafs
+\tikzstyle{bag} = [text width=4em, text centered]
+\tikzstyle{end} = [circle, minimum width=3pt,fill, inner sep=0pt]
+
+% The sloped option gives rotated edge labels.
+\begin{tikzpicture}[grow=right, sloped]
+\node[bag] {}
+    child {
+        node[bag] {$None$}
+            child {
+                node[end, label=right:
+                    {$P(None\cap \overline{Churn})$}] {}
+                edge from parent
+                node[above] {$P(\overline{C}\mid None)$}
+            }
+            child {
+                node[end, label=right:
+                    {$P(None\cap Churn)$}] {}
+                edge from parent
+                node[above] {$P(C\mid None)$}
+            }
+            edge from parent
+            node[above] {$P(None)$}
+    }
+    child {
+        node[bag] {$New$ $Car$}
+        child {
+                node[end, label=right:
+                    {$P(New$ $Car\cap \overline{Churn})$}] {}
+                edge from parent
+                node[above] {$P(\overline{C}\mid N)$}
+            }
+            child {
+                node[end, label=right:
+                    {$P(New$ $Car\cap Churn)$}] {}
+                edge from parent
+                node[above] {$P(C\mid N)$}
+            }
+        edge from parent
+            node[above] {$P(N)$}
+    }
+    child {
+        node[bag] {$Accident$}
+        child {
+                node[end, label=right:
+                    {$P(Accident\cap \overline{Churn})$}] {}
+                edge from parent
+                node[above] {$P(\overline{C}\mid A)$}
+            }
+            child {
+                node[end, label=right:
+                    {$P(Accident\cap Churn)$}] {}
+                edge from parent
+                node[above] {$P(C\mid A)$}
+            }
+        edge from parent
+            node[above] {$P(A)$}
+    };
+\end{tikzpicture} \par
+
+By assumption we set $P(C\mid None) = 0$ as the amount of terminated contracts during the year which are not being
+caused by a new car or an accident is very small and can be omitted. Therefore we leave these cases out of our data
+(?). What we are interested in predicting is the overall probability of a churn, which can be rewritten as:
+
+\begin{center}
+    $P(C) = P(A\cap C) + P(N\cap C) = P(A)P(C\mid A) + P(N)P(C\mid N)$
+\end{center}
+
+Idea: Predict $P(A)$, $P(N)$, $P(C\mid A)$, $P(C\mid N)$ seperately?
 
 \newpage
 
