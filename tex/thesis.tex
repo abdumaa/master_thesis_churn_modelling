@@ -99,22 +99,29 @@ high accuracy of complex models on the one hand and the interpretability of line
 For this work we use customer data from a big insurance company in Germany. Due to data pretection the data is anonymized which
 does not affect the model accuracy and interpretability in any form. We focus on the product of automobile liability insurance,
 which is by law a mandatory service every car owner must hold in Germany. \\
-Typically car owners close a deal with an insurance company which can be terminated by the end of each year. If the contract
-does not get terminated it is automatically extended for another year. In rare cases both sides agree on a contract with a due
-date during the year (We omit this case in this work). Besides the option to terminate the contract at the end of each year
-there is also an option to terminate it during the year under two circumstances:
+Typically car owners close a deal with an insurance company which can be terminated by the end of each year. In rare cases both
+sides agree on a contract with a due date during the year. If the contract does not get terminated it is automatically extended
+for another year. Besides the option to terminate the contract at the due date there is also an option to terminate
+it earlier in a few special cases. These cases mainly involve car accidents and vehicle changes of the contractor. To sum up,
+here are the three cases in which a churn can (but not must) occur during a year: \\
 
 \begin{center}
     \begin{tabular}{ll}
-        Event A: & Contractor causes an Accident. \\
+        Event A: & Contractor is involved in an Accident. \\
         Event N: & Contractor buys a new Car. \\
+        Event D: & Due date during the year. \\
     \end{tabular}
 \end{center}
 
-Therefore the problem of modelling customer churn needs to be seperated into the probability of a costumer leaving during the
-year and at the end of a year. In this work we will focus on predicting churns occuring during the year. Figure 1 (richtiger
-Verweis) illustrates how this probability on costumer level can be decomposed using the Events A (Accident), N (New Car) and
-C (Churn). \\
+The problem of modelling customer churn needs to be seperated into the probability of a costumer leaving during the
+year and at the end of a year (why noch ausführen). In this work we will focus on predicting churns occuring during the year.
+The purpose is to build a model which can be used at any time $t$ of the year besides in January the 1st to predict the probability of
+a costumer leaving the company in the next period of time $(t, t+s]$. \\
+To provide a model with maximized utility for production one would want to keep $s$ as small as possible. However we will see that
+having a small $s$ will decrease the accuracy of our models (drastically?). With a smaller period the classes of the data become more
+imballanced, creating a higher challange of preprocessing the training data the correct way.
+Figure 1 (richtiger Verweis) illustrates how this probability on costumer level can be decomposed using the Events A (Accident), N
+(New Car), D (Due date during the year) and C (Churn). \\
 
 % Set the overall layout of the tree
 \tikzstyle{level 1}=[level distance=5cm, sibling distance=3cm]
