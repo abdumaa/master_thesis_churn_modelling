@@ -115,12 +115,18 @@ here are the three cases in which a churn can (but not must) occur during a year
 
 The problem of modelling customer churn needs to be seperated into the probability of a costumer leaving during the
 year and at the end of a year (why noch ausführen). In this work we will focus on predicting churns occuring during the year.
-The purpose is to build a model which can be used at any time $t$ of the year besides in January the 1st to predict the probability of
+The purpose is to build a model which can be used at any time $t$ of the year besides on January the 1st to predict the probability of
 a costumer leaving the company in the next period of time $(t, t+s]$. \\
-To provide a model with maximized utility for production one would want to keep $s$ as small as possible. However we will see that
-having a small $s$ will decrease the accuracy of our models (drastically?). With a smaller period the classes of the data become more
-imballanced, creating a higher challange of preprocessing the training data the correct way.
-Figure 1 (richtiger Verweis) illustrates how this probability on costumer level can be decomposed using the Events A (Accident), N
+It can be argued that in order to provide a model with maximized utility for production one would want to keep $s$ small. For example
+a company would highly benifit from a model, which can predict the churn-probability of tomorrow or the next week. However we will see that
+having a small $s$ will decrease the accuracy of our models (drastically?), creating a trade-off situation between model accuracy and the benifits
+of a small $s$. With a smaller period the classes of the data become more imballanced, creating a higher challange of preprocessing the training
+data and feeding the algorithm enough information on potential churners. Furthermore, a small $s$ decreases the scope of action for a company to
+retain potential customers leaving. \\
+
+\subsection{Modelling Approach} \par
+
+Figure 1 (richtiger Verweis) illustrates how the probability of a churn during the year on can be decomposed using the Events A (Accident), N
 (New Car), D (Due date during the year) and C (Churn). \\
 
 % Set the overall layout of the tree
@@ -150,6 +156,23 @@ Figure 1 (richtiger Verweis) illustrates how this probability on costumer level 
             }
             edge from parent
             node[above] {$P(None)$}
+    }
+    child {
+        node[bag] {$Due$ $Date$}
+        child {
+                node[end, label=right:
+                    {$P(Due$ $Date\cap \overline{Churn})$}] {}
+                edge from parent
+                node[above] {$P(\overline{C}\mid D)$}
+            }
+            child {
+                node[end, label=right:
+                    {$P(Due$ $Date\cap Churn)$}] {}
+                edge from parent
+                node[above] {$P(C\mid D)$}
+            }
+        edge from parent
+            node[above] {$P(D)$}
     }
     child {
         node[bag] {$New$ $Car$}
@@ -188,14 +211,37 @@ Figure 1 (richtiger Verweis) illustrates how this probability on costumer level 
 \end{tikzpicture} \par
 
 By assumption we set $P(C\mid None) = 0$ as the amount of terminated contracts during the year which are not being
-caused by a new car or an accident is very small and can be omitted. Therefore we leave these cases out of our data
-(?). What we are interested in predicting is the overall probability of a churn, which can be rewritten as:
+caused by a new car, an accident or a due date is very small and can be omitted. Therefore we leave these cases out of our data
+(?). Also, the probability $P(D)$ can only take values $0$ and $1$, as either the due date of a customer lies in the next period
+of time $(t, t+s]$ or not. What we are interested in predicting is the overall probability of a churn, which can be rewritten as:
 
 \begin{center}
-    $P(C) = P(A\cap C) + P(N\cap C) = P(A)P(C\mid A) + P(N)P(C\mid N)$
-\end{center}
+    \begin{tabular}{ll}
+        $P(C)$ & $=$ \hspace{3mm} $P(A\cap C) + P(N\cap C) + P(D\cap C)$ \\
+        & $=$ \hspace{3mm} $P(A)P(C\mid A) + P(N)P(C\mid N) + P(D)P(C\mid D)$ \\
+    \end{tabular}
+\end{center} \par
 
-Idea: Predict $P(A)$, $P(N)$, $P(C\mid A)$, $P(C\mid N)$ seperately?
+One idea would be to model the three branches of $A$, $N$ and $D$ seperately. The idea behind this is that different models and
+sets of explanatory variables have the best fit for the probabilities of the three branches. Not only the the three branches
+but also the unconditional and conditional probabilities of a single branch may vary in their best modelling approach. For prediciting
+an accident a model of type (XY) is more suitable, whereas (YZ) would go better with modelling the probability of churn given an
+accident occured. In the course of this work we will begin with a general modelling approach trying to predict the probability $P(C)$.
+At a later stage we will compare the accuracy outcomes of seperately predicting the branch probabilities with the baseline approach. \\
+
+\subsection{Data Preparation} \par
+
+To build the models we use historical data of the insurance company. More specifically we pick (one or many?) timestamp(s) $t$ in the past and
+collect all the active contracts to that(these) timestamp(s). One row corresponds to one active contract. To each row we merge the status of that
+contract in $t+s$. Furthermore, we join the number of requests corresponding to that contract in the period $[t-m, t]$. The period length $m$
+will be another parameter to tune. \\
+Part of this work will also be to evaluate if the churn probability of customers is time invariant. Therefore we statistically test the equality of
+monthly and yearly (and weekly?) mean churn rates using the ANOVA (or other?). We will see that it is time variant (or not?). Due to that result
+it is necessary to include (or not) different timestamps containing all years/months(/weeks) in the data for the model to learn the time differences
+(or not). (These will simply be appended to the as additional rows creating a panel dataset.) \\
+
+-Statt "STORNO" im data-load sql query zu definieren, definieren wir es einfach in dem Feature-Engineering Teil?
+-Test if customer churn probability is time invariant or time variant!!! Is it enough to argue with the Aggregate Churn rate? Show statistically (Voll gute Idee)
 
 \newpage
 
