@@ -124,9 +124,7 @@ of a small $s$. With a smaller period the classes of the data become more imball
 data and feeding the algorithm enough information on potential churners. Furthermore, a small $s$ decreases the scope of action for a company to
 retain potential customers leaving. \\
 
-\subsection{Modelling Approach} \par
-
-Figure 1 (richtiger Verweis) illustrates how the probability of a churn during the year on can be decomposed using the Events A (Accident), N
+Figure 1 (richtiger Verweis) illustrates how the probability of a churn during the year can be decomposed using the Events A (Accident), N
 (New Car), D (Due date during the year) and C (Churn). \\
 
 % Set the overall layout of the tree
@@ -222,26 +220,73 @@ of time $(t, t+s]$ or not. What we are interested in predicting is the overall p
     \end{tabular}
 \end{center} \par
 
-One idea would be to model the three branches of $A$, $N$ and $D$ seperately. The idea behind this is that different models and
+One idea would be to model the three branches of $A$, $N$ and $D$ seperately. The logic behind this is that different models and
 sets of explanatory variables have the best fit for the probabilities of the three branches. Not only the the three branches
 but also the unconditional and conditional probabilities of a single branch may vary in their best modelling approach. For prediciting
 an accident a model of type (XY) is more suitable, whereas (YZ) would go better with modelling the probability of churn given an
 accident occured. In the course of this work we will begin with a general modelling approach trying to predict the probability $P(C)$.
 At a later stage we will compare the accuracy outcomes of seperately predicting the branch probabilities with the baseline approach. \\
 
-\subsection{Data Preparation} \par
+\subsection{Data} \par
 
-To build the models we use historical data of the insurance company. More specifically we pick (one or many?) timestamp(s) $t$ in the past and
-collect all the active contracts to that(these) timestamp(s). One row corresponds to one active contract. To each row we merge the status of that
-contract in $t+s$. Furthermore, we join the number of requests corresponding to that contract in the period $[t-m, t]$. The period length $m$
-will be another parameter to tune. \\
+Most customer churn predicition models have been using only one timestamp to train a model. We want to emphasize the usage of multiple timestamps and
+show that it significantly improves prediction accuracy. The improvement is a result of an increased training set size and the ability of the model to
+especially learn more about the rare class. Furthermore, the model becomes more generalizable in time which is crucial if this model is applied in
+production. (see: How training on multiple time slices improves performance in churn prediction). Explain more. Use Graphics like in the paper.\\
 Part of this work will also be to evaluate if the churn probability of customers is time invariant. Therefore we statistically test the equality of
-monthly and yearly (and weekly?) mean churn rates using the ANOVA (or other?). We will see that it is time variant (or not?). Due to that result
-it is necessary to include (or not) different timestamps containing all years/months(/weeks) in the data for the model to learn the time differences
-(or not). (These will simply be appended to the as additional rows creating a panel dataset.) \\
+monthly and yearly (and weekly?) mean churn rates using the ANOVA (or other? seasonality tests). We will see that it is time variant (or not?) which underlines the
+importance of including (or not) different timestamps containing different years/months(/weeks) in the data for the model to learn the time differences
+(or not). (These will simply be appended to the data as additional rows creating a panel dataset.) \\
+Therefore to build the models we use historical data of the insurance company. More specifically we pick $N$ (one or many?) timestamp(s) $t_{i}$ with
+$i = 1,...,N$ in the past and collect all the active contracts to that(these) timestamp(s). One row corresponds to one active contract at $t_{i}$. So
+if one hypothetical contract is active in all $N$ periods it will appear as $N$ seperate rows in our data. To each row we merge the status of that
+contract in $t_{i}+s$. Furthermore, we join the number of requests corresponding to that contract in the period $[t_{i}-m, t_{i}]$. The period length $m$
+will be another parameter to tune. \\
+Describe the ETL Process? \\
 
--Statt "STORNO" im data-load sql query zu definieren, definieren wir es einfach in dem Feature-Engineering Teil?
--Test if customer churn probability is time invariant or time variant!!! Is it enough to argue with the Aggregate Churn rate? Show statistically (Voll gute Idee)
+-Statt "STORNO" im data-load sql query zu definieren, definieren wir es einfach in dem Feature-Engineering Teil?\\
+-Test if customer churn probability is time invariant or time variant!!! Is it enough to argue with the Aggregate Churn rate? Show statistically (Voll gute Idee)\\
+-How do I exclude 1.1. churners in my data? Exclude the entire contract or simply say y=0 as he didnt churn during the year?\\
+-Safe noch als Variable einbauen, was sein Preis bei einer jetzigen Berechnung wäre (und dann Differenz zwischen Preis, den er zahlt und Preis den er angezeigt bekommt!)\\
+
+\section{Modelling Approach} \par
+
+\subsection{Preprocessing} \par
+
+\subsection{Handling Class Imbalance} \par
+
+Studying the rarity of an event in the context of machine learning has become an important challange in the recent two decades. Rare events, such as a customer churning in the
+next period, are much harder to identify and learn for most of the models. HaiYing Wang et al (Logistic Regression for Massive Data with Rare Events) study the convergence rate
+and distributaional properties of a Maximum-Likelihood estimator for the parameters of a logistic regression while prediciting rare events. Their finding is that the convergence
+rate of the MLE is equal to the inverse of the number of examples in the minority class rather then the overall size of the training data set. So the accuracy of the estimates for
+the parameters is limited to the available information on the minority class, even if the size of the dataset is massive. \\
+Therefore some methods have been developped to decrease the problematic of imballanced classes. In
+this chapter we will present (three?) different methods which can be applied to the training set, before feeding it to the model. To handle and evaluate the outcomes
+of prediciting rare events also the appropriate models and model evaluation metrics must be chosen. This will be discussed in the next two chapters. \\
+
+\subsubsection*{(i) Downsampling}
+
+The first basic sampling method is named downsampling. It randomly eliminates examples from the majority class in order to artifficially decrease the imballance between the
+two classes. The downside of this approach is that it possibly eliminates useful examples for the model to maintain a high accuracy in predicting the majority class 
+(Mining with Rarity: A Unifying Framework). HaiYing Wang et al (Logistic Regression for Massive Data with Rare Events) also study the convergence rate and distributaional
+properties when applying downsampling. According to their findings the asymptotic distribution of the resulting parameters may be identical to the MLE's using the full data set.
+Under this condition there is no loss in terms of efficiency (minimum possible variance of an unbiased estimator devided by its actual variance). \\
+
+\subsubsection*{(ii) Upsampling}
+
+The second basic sampling method is the upsampling approach. This method simply duplicates examples from the minority class until the classes are more balanced.
+While duplicating examples though, the chances of overfitting to these duplicates becomes a more probable threat.
+Also, no new data is being generated in order to let the model learn more valuable characteristics about the minority class (Mining with Rarity: A Unifying Framework).
+Additionally, the computational performance of this approach can get rather poor, espacially with large datasets and highly imballanced classes. While evaluating the
+asymptotics of the MLE's with upsampling, HaiYing Wang et al find out that it also decreases the efficiency. A probable higher asymptotic variance of the estimators
+is the reason for that. \\
+
+
+\subsubsection*{(iii) SMOTE}
+
+\subsection{Machine Learning Models} \par
+
+\subsection{Model Evaluation Metrics} \par
 
 \newpage
 
