@@ -285,11 +285,28 @@ is the reason for that. \\
 \subsubsection*{(iii) SMOTE}
 
 The more advanced SMOTE-approach (Synthetic Minority Oversampling Technique) (SMOTE: Synthetic Minority Over-sampling Technique) also creates more artifficial examples of
-the minority class. Instead of simply duplicating some rows SMOTE creates new nearest neighbors in terms of feature characteristics for the minority class examples. \\
-While constructing the feature characteristics of the new examples as a new nearest neighbor for example $i$ of the minority class one has to differentiate between continuous and nominal features. For the nominal features the one takes
-
+the minority class. Instead of simply duplicating some rows SMOTE creates new nearest neighbors in terms of feature values for the minority class examples. 
+While constructing the feature values of the new example $(n + 1)$ (where n is the size of the unsampled dataset) as a new nearest neighbor for example $i$ of the
+minority class one has to differentiate between continuous and nominal features. The k-nearest neighbors for the minority class are typically constructed with the Euclidean
+Distance for continuous features and the Value Distance Metric for nominal features (maybe include other distance measures here? Mahalanobis Distance?).\\
+A. Continuous features: \\
+A.1) Construct difference between corresponding feature value of example $i$ and one of its k nearest neighbors. \\
+A.2) Multiply this difference with a random value drawn from a uniform distribution between 0 and 1. \\
+A.3) Construct the feature value of the new example by adding the multiplied difference to the feature value of example $i$. \\
+B. Nominal features: \\
+B.1) Choose the feature value which is the majority vote between the feature value $i$ and its k nearest neighbors. \\
+B.2) Assign this value to the corresponding feature of the new example. \\
+With this approach it is ensured that the model learns more about the neighborhood regions of the minority class. It decreases the probability, that the model overfits to the
+duplicates created in upsampling. \\
 
 \subsubsection*{(iv) Cost-Sensitive Classifiers}
+One drawback of the presented sampling methods is that the sample distributions are being changed. A different starting point is to to change the objective cost function which
+is to be minimized during the model estimation. Thereby the sample size and the distribution stay the same. In the modified cost function we want to penalize false-negative
+classifications with a higher weight. Reason behind this is to ensure that the event of interest, represented by the minority class, is predicted correctly. \\
+(How does our cost-function look like then? Gattermann use balanced class weights which are inversely proportional to the class frequency and thereby assign more weight to samples
+from the minority class.) \\
+The challange of this approach is to find the appropriate penalty weight. It is hard to measure the cost of misclassifying an insurance-customer regarding churn-probabilities.
+The fact that these costs can come from multiple sources which are not easily definable is one part of the reasoning. \\
 
 \subsection{Machine Learning Models} \par
 
