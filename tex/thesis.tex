@@ -212,6 +212,7 @@ By assumption we set $P(C\mid None) = 0$ as the amount of terminated contracts d
 caused by a new car, an accident or a due date is very small and can be omitted. Therefore we leave these cases out of our data
 (?). Also, the probability $P(D)$ can only take values $0$ and $1$, as either the due date of a customer lies in the next period
 of time $(t, t+s]$ or not. What we are interested in predicting is the overall probability of a churn, which can be rewritten as:
+(Change this to a formula with a number next to it?)
 
 \begin{center}
     \begin{tabular}{ll}
@@ -242,6 +243,7 @@ $i = 1,...,N$ in the past and collect all the active contracts to that(these) ti
 if one hypothetical contract is active in all $N$ periods it will appear as $N$ seperate rows in our data. To each row we merge the status of that
 contract in $t_{i}+s$. Furthermore, we join the number of requests corresponding to that contract in the period $[t_{i}-m, t_{i}]$. The period length $m$
 will be another parameter to tune. \\
+Illustrate graphically like in Gattermann? \\
 Describe the ETL Process? \\
 
 -Statt "STORNO" im data-load sql query zu definieren, definieren wir es einfach in dem Feature-Engineering Teil?\\
@@ -251,7 +253,16 @@ Describe the ETL Process? \\
 
 \section{Modelling Approach} \par
 
+\subsection{Literature Review} \par
+
+see Gattermann et al. 2. Literature Review to get an idea on how to do this Literature Review. \\
+Put an introduction in to the next subsections. Say sth like "there is a wide range of literature on classification techniques and specifically on customer churn predicition.
+Baseline: Logistic Regression. They propose following advanced techniques. In chapter 3.4 we are going to focus on X, Y and Z" \\
+Also include introductory words for the other subsections. \\
+
 \subsection{Preprocessing} \par
+
+Put the ETL process here? Including multiple time stamps explanation here instead of Chapter 2? \\
 
 \subsection{Handling Class Imbalance} \par
 
@@ -299,16 +310,64 @@ B.2) Assign this value to the corresponding feature of the new example. \\
 With this approach it is ensured that the model learns more about the neighborhood regions of the minority class. It decreases the probability, that the model overfits to the
 duplicates created in upsampling. \\
 
-\subsubsection*{(iv) Cost-Sensitive Classifiers}
-One drawback of the presented sampling methods is that the sample distributions are being changed. A different starting point is to to change the objective cost function which
+\subsubsection*{(iv) Cost-Sensitive Classifiers} \label{Cost-Sensitive Classifiers}
+One drawback of the presented sampling methods is that the sample distribution is being changed. A different starting point is to change the objective cost function which
 is to be minimized during the model estimation. Thereby the sample size and the distribution stay the same. In the modified cost function we want to penalize false-negative
 classifications with a higher weight. Reason behind this is to ensure that the event of interest, represented by the minority class, is predicted correctly. \\
 (How does our cost-function look like then? Gattermann use balanced class weights which are inversely proportional to the class frequency and thereby assign more weight to samples
-from the minority class.) \\
+from the minority class.) (or cite: Cost-sensitive learning methods for imbalanced data)  \\
 The challange of this approach is to find the appropriate penalty weight. It is hard to measure the cost of misclassifying an insurance-customer regarding churn-probabilities.
-The fact that these costs can come from multiple sources which are not easily definable is one part of the reasoning. \\
+The fact that these costs can come from multiple sources which are not easily definable is one part of the reasoning. Therefore one conventional method is to assign inverse of the class frequency to the associated weights in the cost function. (So the to be minimized cost function would look like this:)\\
 
-\subsection{Machine Learning Models} \par
+\subsection{Machine Learning Models and Interpretability} \par
+
+\subsubsection*{(i) Logisitic Regression}
+The logistic regression is used as a benchmark model for all classification problems. It has high advantages in terms of computational complexity and interpretability,
+but fails in capturing complex relationships and interactions. As in most cases it has the lowest accuracy of all classifiers we use it as a baseline model in order to
+evaluate the advantages of additional complexity in the models, as in Random Forests, Boosted Trees and Explainable Boosting Machines. Thereby we focus on model performance on unseen data and model interpretability.\\
+Logisitic regression applies a sigmoid function to the input characteristics in order to get values (probabilities) between $0$ and $1$ as a Bernoulli distribution. We will use the following conventional notation throughout this work: \\
+
+\begin{equation} \label{bern_dist}
+    \widehat{C_{t+s}} = P(C_{t+s}=1\mid X_{t}) = f\big(g(X_{t})\big) = \frac{e^{g(X_{t})}}{1 + e^{g(X_{t})}} \\
+\end{equation}
+
+Note that from now on we use a vectorized notation. So $\hat{C}$ represents a vector of probabilities, where the i'th element ($i = 1,...,N$) corresponds to the probability of a churn in time $t+s$ of the same at $t$ active contract. This probability vector is constructed by a model conditional on a characteristic matrix $X$ at time $t$. Again, each row of $X$ represents a different contract and column j is the characteristic j ($j = 1,...,M$) of that contract. \\
+Therefore $f(\cdot)$ is the sigmoid function used on function $g(\cdot)$, where in logistic regression $g(\cdot)$ is a simple linear model. For Explainable Boosting Machines, this function is allowed to be more complex. \\
+Maximum Likelihood is then used to estimate the vector of parameters $\theta$ of the model. It maximizes the joint probability that the status of the training data contracts are drawn from the Bernoulli distribution stated in (\ref{bern_dist}). For the final model in production, when estimating probabilities for a churn in the next period, $t$ is of course equal across all contracts in $X$. But as already stated, for training the model we use multiple timestamps of the historized data. Therefore the index $t$ is left out for the input matrix $X$ and output vector $C$ while estimating model parameters, avoiding a misleading notation. Still, the status of contract $i$ is determined after $s$ units of time for all contracts. The likelihood function to be maximized is described as follows: \\
+
+\begin{equation} \label{logistic_MLE}
+    L(C; X, \theta) = \prod_{i=1}^{N}P\big(C^{(i)}=1\mid X^{(i)}\big)^{I(C^{(i)}=1)}\Big(1 - P\big(C^{(i)}=1\mid X^{(i)}\big)^{1 - I(C^{(i)}=1)}\Big) \\
+\end{equation}
+
+Then the loss function is characterized by the negative log of (\ref{logistic_MLE}), which can be minimized with respect to $\theta$ using Gradient Descent, Newton Raphson (Zitieren!) or other optimization proceedings.
+
+\begin{equation} \label{logistic_log_MLE}
+    \begin{aligned}
+        l(C; X, \theta) & = -\sum_{i=1}^{N}C^{(i)}log\big(P(C^{(i)}=1\mid X^{(i)})\big) + (1 - C^{(i)})log\big(1 - P(C^{(i)}=1\mid  X^{(i)})\big) \\
+        & = -\sum_{i=1}^{N}C^{(i)}log(\widehat{C^{(i)}}) + (1 - C^{(i)})log(1 - \widehat{C^{(i)}}) \\
+    \end{aligned}
+\end{equation}
+
+In our case we have a lot (how many?) of characteristics in the raw matrix $X$. Consequently it makes sense to add a penalty term to the loss function to avoid overfitting to the training data. (Wenn zu wenig geschrieben mehr auf Overfittingproblem eingehen?) Additionally, as already mentioned in (\ref{Cost-Sensitive Classifiers}), one technique to handle imbalanced classes is to use cost-sensitive classifiers. We can implement this by setting additional penalty weights to our loss function. \\
+
+\begin{equation} \label{loss_fct}
+    l(C; X, \theta) = -\sum_{i=1}^{N}w_{1}C^{(i)}log(\widehat{C^{(i)}}) + w_{0}(1 - C^{(i)})log(1 - \widehat{C^{(i)}}) + \lambda h(\theta)
+\end{equation}
+
+Here, the penalty term $h(\cdot)$ can either be an L1 or L2 regularization on $\theta$. The additional parameters of $\lambda$, $w_{0}$ and $w_{1}$ are hyperparameters which can be tuned during grid search. Following (whose?) approach, $w_{1}$ and $w_{0}$ can also be set by default to the inverse of their corresponding class frequencies in the training data. \\
+After having found the optimal set of parameters it is time to define the classification cutoff $\tau$ for predicting a churn. The logistic regression model outputs a probability which is between 0 and 1. The rule of thumb is to set $\tau = 0.5$, such that probabilities larger than $0.5$ are predicted as churns and the rest as non-churns. \\
+Interpretability. \\
+
+\subsubsection*{(i) Random Forest Classifier}
+
+Classification trees have a different approach on builing a prediction model for $\widehat{C_{t+s}} = P(C_{t+s}=1\mid X_{t})$. They search for the optimal sequential binary sample splits in order to minimize the objective loss function. So at each node of the tree the optimal characteristic $j$ and its optimal split point $r$ need to be found. The search at each node can be summarized as follows:
+
+\begin{equation} \label{dec_tree}
+    \begin{aligned}
+        S_{1}(j, r) = \{X\mid X^{j}\geq r\} , S_{2}(j, r) = \{X\mid X^{j}< r\} \\
+        \{j, r\} \in \min_{j, s} Sum of Loss function in resulting two regions
+    \end{aligned}
+\end{equation}
 
 \subsection{Model Evaluation Metrics} \par
 
