@@ -360,14 +360,23 @@ Interpretability. \\
 
 \subsubsection*{(i) Random Forest Classifier}
 
-Classification trees have a different approach on builing a prediction model for $\widehat{C_{t+s}} = P(C_{t+s}=1\mid X_{t})$. They search for the optimal sequential binary sample splits in order to minimize the objective loss function. So at each node of the tree the optimal characteristic $j$ and its optimal split point $r$ need to be found. The search at each node can be summarized as follows:
+Classification trees have a different approach on builing a prediction model for $\widehat{C_{t+s}} = P(C_{t+s}=1\mid X_{t})$. They search for the optimal sequential binary sample splits in order to minimize an objective loss function. So at each node of the tree the optimal characteristic $j$ and its optimal split point $r$ need to be found. The search at each node can be summarized as follows:
 
 \begin{equation} \label{dec_tree}
     \begin{aligned}
         S_{1}(j, r) = \{X\mid X^{j}\geq r\} , S_{2}(j, r) = \{X\mid X^{j}< r\} \\
-        \{j, r\} \in \min_{j, s} Sum of Loss function in resulting two regions
+        \{j, r\} \in \min_{j, s} \sum_{i:X^{(i)}\in S_{1}(j, r)}l(C^{(i)}; X^{(i)}, \widehat{C^{(i)}}) + \sum_{i:X^{(i)}\in S_{2}(j, r)}l(C^{(i)}; X^{(i)}, \widehat{C^{(i)}})
     \end{aligned}
 \end{equation}
+
+The loss function for region $S_{k}$ is calculated using the predictions $\widehat{C^{(i)}}$ ($i:X^{(i)}\in S_{k}$), which are simply the shares of churns in $S_{k}$. The typical loss functions are based on evaluating the purity of the resulting regions. In the ideal case, one would like to find the splits in $X$ which always correctly assign contracts of the two classes into completely different regions. In this case, $\widehat{C^{(i)}}$ would always be either 1 or 0. In order approach this case one either uses the Gini-index or the Cross-entropy for region $S_{k}$: \\
+
+\begin{center}
+    \begin{tabular}{ll}
+        Gini-index: & $2\widehat{C^{(i)}}(1-\widehat{C^{(i)}})$ \\
+        Cross-entropy: & $-\widehat{C^{(i)}}log(\widehat{C^{(i)}}) - (1-\widehat{C^{(i)}})log(1-\widehat{C^{(i)}})$ \\
+    \end{tabular}
+\end{center}
 
 \subsection{Model Evaluation Metrics} \par
 
