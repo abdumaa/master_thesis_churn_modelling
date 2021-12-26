@@ -351,34 +351,56 @@ Then the loss function is characterized by the negative log of (\ref{logistic_ML
 In our case we have a lot (how many?) of characteristics in the raw matrix $X$. Consequently it makes sense to add a penalty term to the loss function to avoid overfitting to the training data. (Wenn zu wenig geschrieben mehr auf Overfittingproblem eingehen?) Additionally, as already mentioned in (\ref{Cost-Sensitive Classifiers}), one technique to handle imbalanced classes is to use cost-sensitive classifiers. We can implement this by setting additional penalty weights to our loss function. \\
 
 \begin{equation} \label{loss_fct}
-    l(C; X, \theta) = -\sum_{i=1}^{N}w_{1}C^{(i)}log(\widehat{C^{(i)}}) + w_{0}(1 - C^{(i)})log(1 - \widehat{C^{(i)}}) + \lambda h(\theta)
+    L(C, \widehat{C}) = -\sum_{i=1}^{N}w_{1}C^{(i)}log(\widehat{C^{(i)}}) + w_{0}(1 - C^{(i)})log(1 - \widehat{C^{(i)}}) + \lambda h(\theta)
 \end{equation}
 
 Here, the penalty term $h(\cdot)$ can either be an L1 or L2 regularization on $\theta$. The additional parameters of $\lambda$, $w_{0}$ and $w_{1}$ are hyperparameters which can be tuned during grid search. Following (whose?) approach, $w_{1}$ and $w_{0}$ can also be set by default to the inverse of their corresponding class frequencies in the training data. \\
 After having found the optimal set of parameters it is time to define the classification cutoff $\tau$ for predicting a churn. The logistic regression model outputs a probability which is between 0 and 1. The rule of thumb is to set $\tau = 0.5$, such that probabilities larger than $0.5$ are predicted as churns and the rest as non-churns. \\
 Interpretability. \\
 
-\subsubsection*{(i) Random Forest Classifier}
+\subsubsection*{(ii) Tree-based Classifier}
+
+\textit{Single Classification Tree}
 
 Classification trees have a different approach on builing a prediction model for $\widehat{C_{t+s}} = P(C_{t+s}=1\mid X_{t})$. Unlike logistic regression, they allow for non-linearities and interactions. Classification trees search for the optimal sequential binary sample splits in order to minimize an objective loss function. So at each node of the tree the optimal characteristic $j$ and its optimal split point $r$ need to be found. The search at each node can be summarized as follows:
 
 \begin{equation} \label{dec_tree}
     \begin{aligned}
         S_{1}(j, r) = \{X\mid X^{j}\geq r\} , S_{2}(j, r) = \{X\mid X^{j}< r\} \\
-        \{j, r\} \in \min_{j, s} \sum_{i:X^{(i)}\in S_{1}(j, r)}l(C^{(i)}; X^{(i)}, \widehat{C^{(i)}}) + \sum_{i:X^{(i)}\in S_{2}(j, r)}l(C^{(i)}; X^{(i)}, \widehat{C^{(i)}})
+        \{j, r\} \in \min_{j, s} \sum_{i:X^{(i)}\in S_{1}(j, r)}l(C^{(i)}; X^{(i)}, \widehat{p^{k}}) + \sum_{i:X^{(i)}\in S_{2}(j, r)}l(C^{(i)}; X^{(i)}, \widehat{p^{k}})
     \end{aligned}
 \end{equation}
 
-The loss function for region $S_{k}$ is calculated using the predictions $\widehat{C^{(i)}}$ ($i:X^{(i)}\in S_{k}$), which are simply the shares of churns in $S_{k}$. The typical loss functions are based on evaluating the purity of the resulting regions. In the ideal case, one would like to find the splits in $X$ which always correctly assign contracts of the two classes into completely different regions. In this case, $\widehat{C^{(i)}}$ would always be either 1 or 0. In order approach this case one either uses the Gini-index or the Cross-entropy for region $S_{k}$: \\
+The loss function for region $S_{k}$ is calculated using the resulting region prediction $\widehat{p^{k}}$ (applied to all obeservations which are assigned to this region after the splits $i:X^{(i)}\in S_{k}$), which are simply the shares of churns in $S_{k}$. The typical loss functions are based on evaluating the purity of the resulting regions. In the ideal case, one would like to find the splits in $X$ which always correctly assign contracts of the two classes into two different regions. In this case, $\widehat{p^{k}}$ would always be either 1 or 0. In order to approach this case one either uses the Gini-index or the Cross-entropy for region $S_{k}$: \\
 
 \begin{center}
     \begin{tabular}{ll}
-        Gini-index: & $2\widehat{C^{(i)}}(1-\widehat{C^{(i)}})$ \\
-        Cross-entropy: & $-\widehat{C^{(i)}}log(\widehat{C^{(i)}}) - (1-\widehat{C^{(i)}})log(1-\widehat{C^{(i)}})$ \\
+        Gini-index: & $2\widehat{p^{k}}(1-\widehat{p^{k}})$ \\
+        Cross-entropy: & $-\widehat{p^{k}}log(\widehat{p^{k}}) - (1-\widehat{p^{k}})log(1-\widehat{p^{k}})$ \\
     \end{tabular}
 \end{center}
 
-In most applications a single classification tree has high variance due to overfitting to the training data. The accuracy in the prediction on unseen data will therefore be rather poor compared to the accuracy during training. Random forests (Breiman 2001) are designed to reduce the variance of the predictions, by averaging over predictions of multiple trees. This phenomenon is called wisdom of the crowds and is underlined by the fact that the average of multiple estimators for the same parameter will have the same bias but a smaller variance (how much depends on N and the correlation of the estimators) than a single estimator.
+The splits at each node are performed until certain criteria for the loss functions are met (which can be tuned by the hyperparameters and are summerized in a table inshaallah). To get the prediction $\widehat{C^{(i)}}$, one assigns $\widehat{p^{k}}$ as the region prediction of the corresponding end node of observation $i$ to that value.
+
+\textit{Boosted Classification Trees}
+
+In most applications the predictions of a single classification tree have high variance due to overfitting to the training data. The accuracy in the prediction on unseen data will therefore be rather poor compared to the accuracy during training. Random forests (Breiman 2001) are designed to reduce the variance of the predictions, by averaging over predictions of multiple independent trees. This phenomenon is called wisdom of the crowds and is underlined by the fact that the average of multiple estimators for the same parameter will have the same bias but a smaller variance (how much depends on N and the correlation (which is 0 if we assume that the base learners are independent) of the estimators) than a single estimator. \\
+The current literature (cite!!!) however agrees on the fact that Boosted Tree Algorithms outperform Random Forests. Therefore we will focus on the core methodology and hyperparameters of boosted trees in the following. \\
+The idea of boosted classification trees is to have a sequence of dependent base learners (trees), which improve in terms of accuracy where it is most needed. Thereby, the base learners are constructed in a shallow shape, allowing for a bias in their accuracy. The resulting loss of each tree is then fitted by the preceeding trees. So the procedure can be summarized by these steps: \\
+1. Set first fit to $\hat{F}(X) := 0$ and loss to $L := \sum_{i=1}^{N} l(C^{(i)}, \hat{F}(X^{(i)}))$ \\
+2. For the sequence of trees $b=1,..,B$ repeat: \\
+2.1 Fit shallow tree $\hat{f}_{b}(X)$ which minimizes the Loss $L = \sum_{i=1}^{N} l(C^{(i)}, \hat{F}_{b-1}(X^{(i)}) + \hat{f}_{b}(X^{(i)}))$ \\
+2.2 Update predicition to: $\hat{F}(X) := \hat{F}(X) + \lambda\hat{f}_{b}$ \\
+2.3 Update loss to $L := \sum_{i=1}^{N} l(C^{(i)}, \hat{F}(X^{(i)}))$ \\
+3. Final prediction is then: $\hat{C} = \hat{f}(X) = \sum_{b=1}^{B}\lambda\hat{f}_{b}(X)$ \\
+
+The hyperparameter $\lambda$ is called learning rate and set to a small number to learn slowly and to avoid overfitting. Also notice, that the loss function defined here is the objective loss function used for gradient boosting and is defined differently than the loss function, when constructing a single tree. The objective loss function we will use for Gradient Boosting will be the log-loss derived in (\ref{loss_fct}). This allows us to handle the class imbalance as well as add regularization.\\
+
+The main cost with boosted trees is learning the single trees, and the most time-consuming part in that is to find the best split-points. Therefore we will use the package lightgbm in our prediction model, developped by (XY), which aims to tackle this issue. The so called histogram-based approach is to bin the features which creates high efficiency gains during searching for the optimal splits, especially for continuous variables. \\
+Leaf-wise vs. Level-wise learning ? \\
+To apply the log-loss function in (\ref{loss_fct}) we need to deliver the gradient as well as the hessian of this function. Herewith the lightgbm-package again aims to improve time-cost as is it takes the second order Taylor Expansion to compute the optimal loss minimizing $\hat{f}_{b}(X)$ in each iteration $b=1,...,B$. This can be computed as follows: \\
+
+
 There are a lot of hyperparameters which allow to tune the tree structure. Most important are the maximum depth and the minimum number of samples in a node (and XY). In Figure (1) is an overview of the hyperparameters we will focus on and the corresponding values we will use for grid search.
 
 \subsection{Model Evaluation Metrics} \par
