@@ -12,6 +12,8 @@
 \usepackage{lmodern}
 \usepackage{amsmath}
 \usepackage{amsfonts}
+\usepackage{multirow}
+\usepackage{rotating}
 \usepackage{mathrsfs}
 \usepackage{graphicx}
 \usepackage{tikz}
@@ -382,26 +384,46 @@ The loss function for region $S_{k}$ is calculated using the resulting region pr
 
 The splits at each node are performed until certain criteria for the loss functions are met (which can be tuned by the hyperparameters and are summerized in a table inshaallah). To get the prediction $\widehat{C^{(i)}}$, one assigns $\widehat{p^{k}}$ as the region prediction of the corresponding end node of observation $i$ to that value.
 
-\textit{Boosted Classification Trees}
+\textit{Boosted Trees for Classification}
 
 In most applications the predictions of a single classification tree have high variance due to overfitting to the training data. The accuracy in the prediction on unseen data will therefore be rather poor compared to the accuracy during training. Random forests (Breiman 2001) are designed to reduce the variance of the predictions, by averaging over predictions of multiple independent trees. This phenomenon is called wisdom of the crowds and is underlined by the fact that the average of multiple estimators for the same parameter will have the same bias but a smaller variance (how much depends on N and the correlation (which is 0 if we assume that the base learners are independent) of the estimators) than a single estimator. \\
 The current literature (cite!!!) however agrees on the fact that Boosted Tree Algorithms outperform Random Forests. Therefore we will focus on the core methodology and hyperparameters of boosted trees in the following. \\
-The idea of boosted classification trees is to have a sequence of dependent base learners (trees), which improve in terms of accuracy where it is most needed. Thereby, the base learners are constructed in a shallow shape, allowing for a bias in their accuracy. The resulting loss of each tree is then fitted by the preceeding trees. So the procedure can be summarized by these steps: \\
-1. Set first fit to $\hat{F}(X) := 0$ and loss to $L := \sum_{i=1}^{N} l(C^{(i)}, \hat{F}(X^{(i)}))$ \\
+The idea of boosted trees for classification is to have a sequence of dependent base learners (trees), which improve in terms of accuracy where it is most needed. Thereby, the base learners $\hat{g}_{b}(X)$ ($b=1,..,B$) are constructed in a shallow shape, avoiding an overfitted single learner. Additionally the $\hat{g}_{b}(X)$ are now regression trees, which output values in $(-\infty, \infty)$. To get an interpretable result we again have to apply the sigmoid function $f(\cdot)$ to get a probability in $[0, 1]$. The resulting loss of each tree is then fitted by the preceeding trees. So the procedure can be summarized by these steps: \\
+1. Set first fit to $\hat{G}(X) := 0$ and loss to $L := \sum_{i=1}^{N} l(C^{(i)}, f(\hat{G}(X^{(i)})))$ \\
 2. For the sequence of trees $b=1,..,B$ repeat: \\
-2.1 Fit shallow tree $\hat{f}_{b}(X)$ which minimizes the Loss $L = \sum_{i=1}^{N} l(C^{(i)}, \hat{F}_{b-1}(X^{(i)}) + \hat{f}_{b}(X^{(i)}))$ \\
-2.2 Update predicition to: $\hat{F}(X) := \hat{F}(X) + \lambda\hat{f}_{b}$ \\
-2.3 Update loss to $L := \sum_{i=1}^{N} l(C^{(i)}, \hat{F}(X^{(i)}))$ \\
-3. Final prediction is then: $\hat{C} = \hat{f}(X) = \sum_{b=1}^{B}\lambda\hat{f}_{b}(X)$ \\
+2.1 Fit shallow tree $\hat{g}_{b}(X)$ which minimizes the Loss $L = \sum_{i=1}^{N} l\Big(C^{(i)}, f\big(\hat{G}(X^{(i)}) + \hat{g}_{b}(X^{(i)})\big)\Big)$ \\
+2.2 Update fit to: $\hat{G}(X) := \hat{G}(X) + \lambda\hat{g}_{b}(X)$\\
+3. Final prediction is then: $\hat{C} = \hat{f}(X) = f(\sum_{b=1}^{B}\lambda\hat{g}_{b}(X))$ \\
 
-The hyperparameter $\lambda$ is called learning rate and set to a small number to learn slowly and to avoid overfitting. Also notice, that the loss function defined here is the objective loss function used for gradient boosting and is defined differently than the loss function, when constructing a single tree. The objective loss function we will use for Gradient Boosting will be the log-loss derived in (\ref{loss_fct}). This allows us to handle the class imbalance as well as add regularization.\\
+The hyperparameter $\lambda$ is called learning rate and set to a small number to learn slowly and to avoid overfitting. Also notice, that the loss function defined here is the objective loss function used for gradient boosting and is defined differently than the loss function, when constructing a single tree. The objective loss function we will use for Gradient Boosting will be the log-loss derived in (\ref{loss_fct}). This allows us to handle the class imbalance (but we will leave out the regularization term for now).\\
+
+To apply the log-loss function in (\ref{loss_fct}) we need to deliver the gradient as well as the hessian of this function. Herewith the lightgbm-package again aims to improve time-cost as is it takes the second order Taylor Expansion to compute the optimal loss minimizing $\hat{f}_{b}(X)$ in each iteration $b=1,...,B$. This can be computed as follows: \\
 
 The main cost with boosted trees is learning the single trees, and the most time-consuming part in that is to find the best split-points. Therefore we will use the package lightgbm in our prediction model, developped by (XY), which aims to tackle this issue. The so called histogram-based approach is to bin the features which creates high efficiency gains during searching for the optimal splits, especially for continuous variables. \\
 Leaf-wise vs. Level-wise learning ? \\
-To apply the log-loss function in (\ref{loss_fct}) we need to deliver the gradient as well as the hessian of this function. Herewith the lightgbm-package again aims to improve time-cost as is it takes the second order Taylor Expansion to compute the optimal loss minimizing $\hat{f}_{b}(X)$ in each iteration $b=1,...,B$. This can be computed as follows: \\
+
 
 
 There are a lot of hyperparameters which allow to tune the tree structure. Most important are the maximum depth and the minimum number of samples in a node (and XY). In Figure (1) is an overview of the hyperparameters we will focus on and the corresponding values we will use for grid search.
+
+\begin{table}[]
+    \begin{tabular}{llll}
+    \hline
+    \multicolumn{1}{l|}{}                             & \multicolumn{1}{l|}{Hyperparameter}      & Description                                             & \multicolumn{1}{l|}{Grid Search Values}      \\ \hline
+    \multicolumn{1}{c|}{\multirow{7}{*}{\begin{sideways} Boosting \end{sideways}}}    & \multicolumn{1}{l|}{learning rate}       & Boosting learning rate $\lambda$                        & \multicolumn{1}{l|}{Shrinking learning rate} \\
+    \multicolumn{1}{c|}{}                             & \multicolumn{1}{l|}{n\_estimators}       & Number of boosted Trees B                               & \multicolumn{1}{l|}{}                        \\
+    \multicolumn{1}{c|}{}                             & \multicolumn{1}{l|}{objective}           & Objective and/or objective loss function                & \multicolumn{1}{l|}{Custom loss function}    \\
+    \multicolumn{1}{c|}{}                             & \multicolumn{1}{l|}{subsample}           & Subsample ratio of training data used                   & \multicolumn{1}{l|}{}                        \\
+    \multicolumn{1}{c|}{}                             & \multicolumn{1}{l|}{subsample\_freq}     & Frequency of the usage of subsample                     & \multicolumn{1}{l|}{}                        \\
+    \multicolumn{1}{c|}{}                             & \multicolumn{1}{l|}{reg\_alpha}          & L1 regularization term on weights                       & \multicolumn{1}{l|}{}                        \\
+    \multicolumn{1}{c|}{}                             & \multicolumn{1}{l|}{reg\_lambda}         & L2 regularization term on weights                       & \multicolumn{1}{l|}{}                        \\ \hline
+    \multicolumn{1}{l|}{\multirow{5}{*}{\begin{sideways} Single Tree \end{sideways}}} & \multicolumn{1}{l|}{num\_leaves}         & Maximum tree leaves                                     & \multicolumn{1}{l|}{}                        \\
+    \multicolumn{1}{l|}{}                             & \multicolumn{1}{l|}{subsample\_for\_bin} & Number of samples for constructing bin                  & \multicolumn{1}{l|}{}                        \\
+    \multicolumn{1}{l|}{}                             & \multicolumn{1}{l|}{min\_split\_gain}    & Minimum loss reduction for further split on a leaf node & \multicolumn{1}{l|}{}                        \\
+    \multicolumn{1}{l|}{}                             & \multicolumn{1}{l|}{min\_child\_samples} & Minimum number of data needed in a new region           & \multicolumn{1}{l|}{}                        \\
+    \multicolumn{1}{l|}{}                             & \multicolumn{1}{l|}{colsample\_bytree}   & Subsample ratio of columns constructing each tree       & \multicolumn{1}{l|}{}                        \\ \hline
+    \end{tabular}
+    \end{table}
 
 \subsection{Model Evaluation Metrics} \par
 
