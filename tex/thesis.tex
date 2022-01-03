@@ -17,6 +17,10 @@
 \usepackage{mathrsfs}
 \usepackage{graphicx}
 \usepackage{tikz}
+\usepackage{makecell}
+\usepackage{vcell}
+\usepackage{arydshln}
+\usepackage{textcomp}
 \usetikzlibrary{trees}
 \graphicspath{{./images/}}
 
@@ -91,7 +95,7 @@ variables lead to the resulting outcome of the model becomes desirable. The most
 interpretability are linear or logistic models. There the magnitude and sign of the corresponding coefficients (after being
 testet for significance) illustrate the changes of the outcome for a change in the specific explanatory variable. These models
 however lack in terms of accuracy when being compared to the comlex ones. In this work we will present the accuracy and
-interpretability of "Explainable Boosting Machines" developped by (?) for predicting customer churn. It aims to combine the
+interpretability of "Explainable Boosting Machines" developed by (?) for predicting customer churn. It aims to combine the
 high accuracy of complex models on the one hand and the interpretability of linear models on the other hand. \\
 
 \section{Data and Methodology} \par
@@ -273,7 +277,7 @@ next period, are much harder to identify and learn for most of the models. HaiYi
 and distributaional properties of a Maximum-Likelihood estimator for the parameters of a logistic regression while prediciting rare events. Their finding is that the convergence
 rate of the MLE is equal to the inverse of the number of examples in the minority class rather then the overall size of the training data set. So the accuracy of the estimates for
 the parameters is limited to the available information on the minority class, even if the size of the dataset is massive. \\
-Therefore some methods have been developped to decrease the problematic of imballanced classes. In
+Therefore some methods have been developed to decrease the problematic of imballanced classes. In
 this chapter we will present (three?) different methods which can be applied to the training set, before feeding it to the model. To handle and evaluate the outcomes
 of prediciting rare events also the appropriate models and model evaluation metrics must be chosen. This will be discussed in the next two chapters. \\
 
@@ -314,19 +318,22 @@ duplicates created in upsampling. \\
 
 \subsubsection*{(iv) Cost-Sensitive Classifiers} \label{Cost-Sensitive Classifiers}
 One drawback of the presented sampling methods is that the sample distribution is being changed. A different starting point is to change the objective cost function which
-is to be minimized during the model estimation. Thereby the sample size and the distribution stay the same. In the modified cost function we want to penalize false-negative
+will be minimized during the model estimation. Thereby the sample size and the distribution stay the same. In the modified cost function we want to penalize false-negative
 classifications with a higher weight. Reason behind this is to ensure that the event of interest, represented by the minority class, is predicted correctly. \\
 (How does our cost-function look like then? Gattermann use balanced class weights which are inversely proportional to the class frequency and thereby assign more weight to samples
 from the minority class.) (or cite: Cost-sensitive learning methods for imbalanced data)  \\
-The challange of this approach is to find the appropriate penalty weight. It is hard to measure the cost of misclassifying an insurance-customer regarding churn-probabilities.
-The fact that these costs can come from multiple sources which are not easily definable is one part of the reasoning. Therefore one conventional method is to assign inverse of the class frequency to the associated weights in the cost function. (So the to be minimized cost function would look like this:)\\
+The challange of this approach is to find the appropriate penalty parameters. It is hard to measure the cost of misclassifying an insurance-customer regarding churn-probabilities.The fact that these costs can come from multiple sources which are not easily definable is one part of the reasoning. Therefore we will focus on two types of modified loss functions.\\
+One conventional method is to assign simple parameter weights $w0$ and $w1$ to the loss function. By default one might use the inverse of the class frequency as the associated weights in the cost function. These parameters however can also be optimized during grid search. We will call this method the "Simple Weighted Loss Function". The derivation will be part of the next subchapter.\\
+The second approach is called "Focal Loss Function" and was originally designed by FAIR (Facebook Artifficial Intelligence Research) for an object detection purpose (Focal Loss for Dense Object Detection
+). As it also aims to penalize false-negative classifications it is widely used for predicting rare events. Again, the exact structure will be shown in the next subchapter and the parameters can be tuned with grid search.\\
+
 
 \subsection{Machine Learning Models and Interpretability} \par
 
 \subsubsection*{(i) Logisitic Regression}
 The logistic regression is used as a benchmark model for all classification problems. It has high advantages in terms of computational complexity and interpretability,
 but fails in capturing complex relationships and interactions. As in most cases it has the lowest accuracy of all classifiers we use it as a baseline model in order to
-evaluate the advantages of additional complexity in the models, as in Random Forests, Boosted Trees and Explainable Boosting Machines. Thereby we focus on model performance on unseen data and model interpretability.\\
+evaluate the advantages of additional complexity in the models, as in (Random Forests,) Boosted Trees and Explainable Boosting Machines. Thereby we focus on model performance on unseen data and model interpretability.\\
 Logisitic regression applies a sigmoid function to the input characteristics in order to get values (probabilities) between $0$ and $1$ as a Bernoulli distribution. We will use the following conventional notation throughout this work: \\
 
 \begin{equation} \label{bern_dist}
@@ -334,29 +341,41 @@ Logisitic regression applies a sigmoid function to the input characteristics in 
 \end{equation}
 
 Note that from now on we use a vectorized notation. So $\hat{C}$ represents a vector of probabilities, where the i'th element ($i = 1,...,N$) corresponds to the probability of a churn in time $t+s$ of the same at $t$ active contract. This probability vector is constructed by a model conditional on a characteristic matrix $X$ at time $t$. Again, each row of $X$ represents a different contract and column j is the characteristic j ($j = 1,...,M$) of that contract. \\
-Therefore $f(\cdot)$ is the sigmoid function used on function $g(\cdot)$, where in logistic regression $g(\cdot)$ is a simple linear model. For Explainable Boosting Machines, this function is allowed to be more complex. \\
-Maximum Likelihood is then used to estimate the vector of parameters $\theta$ of the model. It maximizes the joint probability that the status of the training data contracts are drawn from the Bernoulli distribution stated in (\ref{bern_dist}). For the final model in production, when estimating probabilities for a churn in the next period, $t$ is of course equal across all contracts in $X$. But as already stated, for training the model we use multiple timestamps of the historized data. Therefore the index $t$ is left out for the input matrix $X$ and output vector $C$ while estimating model parameters, avoiding a misleading notation. Still, the status of contract $i$ is determined after $s$ units of time for all contracts. The likelihood function to be maximized is described as follows: \\
+Therefore $f(\cdot)$ is the sigmoid function used on function $g(\cdot)$, where in logistic regression $g(\cdot)$ is a linear model. For Gradient Boosting and Explainable Boosting Machines this function is allowed to be more complex. \\
 
-\begin{equation} \label{logistic_MLE}
-    L(C; X, \theta) = \prod_{i=1}^{N}P\big(C^{(i)}=1\mid X^{(i)}\big)^{I(C^{(i)}=1)}\Big(1 - P\big(C^{(i)}=1\mid X^{(i)}\big)^{1 - I(C^{(i)}=1)}\Big) \\
+\begin{equation} \label{lin_model}
+    g(X_{t}) = \beta X_{t} + \epsilon_{t} \\
 \end{equation}
 
-Then the loss function is characterized by the negative log of (\ref{logistic_MLE}), which can be minimized with respect to $\theta$ using Gradient Descent, Newton Raphson (Zitieren!) or other optimization proceedings.
+Maximum Likelihood is then used to estimate the vector of parameters $\beta$ of the model. It maximizes the joint probability that the status of the training data contracts are drawn from the Bernoulli distribution stated in (\ref{bern_dist}). For the final model in production, when estimating probabilities for a churn in the next period, $t$ is of course equal across all contracts in $X$. But as already stated, for training the model we use multiple timestamps of the historized data. Therefore the index $t$ is left out for the input matrix $X$ and output vector $C$ while estimating model parameters, avoiding a misleading notation. Still, the status of contract $i$ is determined after $s$ units of time for all contracts. The likelihood function to be maximized is described as follows: \\
+
+\begin{equation} \label{logistic_MLE}
+    L(C; X, \beta) = \prod_{i=1}^{N}P\big(C^{(i)}=1\mid X^{(i)}\big)^{I(C^{(i)}=1)}\Big(1 - P\big(C^{(i)}=1\mid X^{(i)}\big)^{1 - I(C^{(i)}=1)}\Big) \\
+\end{equation}
+
+To describe this term as loss function it is characterized by the negative log of (\ref{logistic_MLE}), which can be minimized with respect to $\beta$ using Gradient Descent, Newton Raphson (Zitieren!) or other optimization proceedings.
 
 \begin{equation} \label{logistic_log_MLE}
     \begin{aligned}
-        l(C; X, \theta) & = -\sum_{i=1}^{N}C^{(i)}log\big(P(C^{(i)}=1\mid X^{(i)})\big) + (1 - C^{(i)})log\big(1 - P(C^{(i)}=1\mid  X^{(i)})\big) \\
+        l(C; X, \beta) & = -\sum_{i=1}^{N}C^{(i)}log\big(P(C^{(i)}=1\mid X^{(i)})\big) + (1 - C^{(i)})log\big(1 - P(C^{(i)}=1\mid  X^{(i)})\big) \\
         & = -\sum_{i=1}^{N}C^{(i)}log(\widehat{C^{(i)}}) + (1 - C^{(i)})log(1 - \widehat{C^{(i)}}) \\
     \end{aligned}
 \end{equation}
 
-In our case we have a lot (how many?) of characteristics in the raw matrix $X$. Consequently it makes sense to add a penalty term to the loss function to avoid overfitting to the training data. (Wenn zu wenig geschrieben mehr auf Overfittingproblem eingehen?) Additionally, as already mentioned in (\ref{Cost-Sensitive Classifiers}), one technique to handle imbalanced classes is to use cost-sensitive classifiers. We can implement this by setting additional penalty weights to our loss function. \\
+In our case we have a lot (how many?) of characteristics in the raw matrix $X$. Consequently it makes sense to add a penalty term to the loss function to avoid overfitting to the training data. While minimizing this loss function during training, this additional penalty term either shrinks some parameters of $\beta$ towards zero (L2 regularization), or sets some to exact 0 (L1 regularization). However, we can also reduce the dimension of characteristics prior to fitting the model. It will be discussed at a later stage of this work. \\
+Additionally, as already mentioned in (\ref{Cost-Sensitive Classifiers}), one technique to handle imbalanced classes is to use cost-sensitive classifiers. We can implement this by setting additional penalty weights to our loss function. The resulting objective "Simple Weighted Loss Function" is described as:\\
 
-\begin{equation} \label{loss_fct}
-    L(C, \widehat{C}) = -\sum_{i=1}^{N}w_{1}C^{(i)}log(\widehat{C^{(i)}}) + w_{0}(1 - C^{(i)})log(1 - \widehat{C^{(i)}}) + \lambda h(\theta)
+\begin{equation} \label{loss_fct_wl}
+    L(C, \widehat{C}) = -\sum_{i=1}^{N}w_{1}C^{(i)}log(\widehat{C^{(i)}}) + w_{0}(1 - C^{(i)})log(1 - \widehat{C^{(i)}}) + \lambda h(\beta)
 \end{equation}
 
-Here, the penalty term $h(\cdot)$ can either be an L1 or L2 regularization on $\theta$. The additional parameters of $\lambda$, $w_{0}$ and $w_{1}$ are hyperparameters which can be tuned during grid search. Following (whose?) approach, $w_{1}$ and $w_{0}$ can also be set by default to the inverse of their corresponding class frequencies in the training data. \\
+Here, the penalty term $h(\cdot)$ can either be an L1 or L2 regularization on $\beta$. The additional parameters of $\lambda$, $w_{0}$ and $w_{1}$ are hyperparameters which can be tuned during grid search. Following (whose?) approach, $w_{1}$ and $w_{0}$ can also be set by default to the inverse of their corresponding class frequencies in the training data. \\
+The objective "Focal Loss Function" can be set up like this: \\
+
+\begin{equation} \label{loss_fct_fl}
+    L(C, \widehat{C}) = -\sum_{i=1}^{N}\alpha(1 - \widehat{C^{(i)}})^{\gamma}C^{(i)}log(\widehat{C^{(i)}}) + (1 - \alpha)\widehat{C^{(i)}}^{\gamma}(1 - C^{(i)})log(1 - \widehat{C^{(i)}}) + \lambda h(\beta)
+\end{equation}
+
 After having found the optimal set of parameters it is time to define the classification cutoff $\tau$ for predicting a churn. The logistic regression model outputs a probability which is between 0 and 1. The rule of thumb is to set $\tau = 0.5$, such that probabilities larger than $0.5$ are predicted as churns and the rest as non-churns. \\
 Interpretability. \\
 
@@ -386,46 +405,104 @@ The splits at each node are performed until certain criteria for the loss functi
 
 \textit{Boosted Trees for Classification}
 
-In most applications the predictions of a single classification tree have high variance due to overfitting to the training data. The accuracy in the prediction on unseen data will therefore be rather poor compared to the accuracy during training. Random forests (Breiman 2001) are designed to reduce the variance of the predictions, by averaging over predictions of multiple independent trees. This phenomenon is called wisdom of the crowds and is underlined by the fact that the average of multiple estimators for the same parameter will have the same bias but a smaller variance (how much depends on N and the correlation (which is 0 if we assume that the base learners are independent) of the estimators) than a single estimator. \\
-The current literature (cite!!!) however agrees on the fact that Boosted Tree Algorithms outperform Random Forests. Therefore we will focus on the core methodology and hyperparameters of boosted trees in the following. \\
-The idea of boosted trees for classification is to have a sequence of dependent base learners (trees), which improve in terms of accuracy where it is most needed. Thereby, the base learners $\hat{g}_{b}(X)$ ($b=1,..,B$) are constructed in a shallow shape, avoiding an overfitted single learner. Additionally the $\hat{g}_{b}(X)$ are now regression trees, which output values in $(-\infty, \infty)$. To get an interpretable result we again have to apply the sigmoid function $f(\cdot)$ to get a probability in $[0, 1]$. The resulting loss of each tree is then fitted by the preceeding trees. So the procedure can be summarized by these steps: \\
+In most applications the predictions of a single classification tree have high variance due to overfitting to the training data. The accuracy in the prediction on unseen data will therefore be rather poor compared to the accuracy during training. Random forests (Breiman 2001) are designed to reduce the variance of the predictions, by averaging over predictions of multiple independent trees. This phenomenon is called "Wisdom of the Crowds" and is underlined by the fact that the average of multiple estimators for the same parameter will have the same bias but a smaller variance (how much depends on N and the correlation (which is 0 if we assume that the base learners are independent) of the estimators) than a single estimator. \\
+The current literature (cite!!!) however agrees on the fact that Boosted Tree Algorithms outperform Random Forests, and therefore also a single tree. Therefore we will focus on the core methodology and hyperparameters of boosted trees in the following. \\
+The idea of boosted trees for classification is to have a sequence of dependent base learners (trees), which improve in terms of accuracy where it is most needed. Thereby, the base learners $\hat{g}_{b}(X)$ ($b=1,..,B$) are constructed in a shallow shape, avoiding an overfitted single learner. Additionally the $\hat{g}_{b}(X)$ are now regression trees, which output values in $(-\infty, \infty)$. So for the optimal split at the nodes of each tree the squared error reduction (of the log-odds?) are now being compared. To get an interpretable result we again have to apply the sigmoid function $f(\cdot)$ to get a probability in $[0, 1]$. The resulting loss of each tree is then fitted by the preceeding trees. So the procedure can be summarized by these steps: \\
 1. Set first fit to $\hat{G}(X) := 0$ and loss to $L := \sum_{i=1}^{N} l(C^{(i)}, f(\hat{G}(X^{(i)})))$ \\
 2. For the sequence of trees $b=1,..,B$ repeat: \\
 2.1 Fit shallow tree $\hat{g}_{b}(X)$ which minimizes the Loss $L = \sum_{i=1}^{N} l\Big(C^{(i)}, f\big(\hat{G}(X^{(i)}) + \hat{g}_{b}(X^{(i)})\big)\Big)$ \\
 2.2 Update fit to: $\hat{G}(X) := \hat{G}(X) + \lambda\hat{g}_{b}(X)$\\
 3. Final prediction is then: $\hat{C} = \hat{f}(X) = f(\sum_{b=1}^{B}\lambda\hat{g}_{b}(X))$ \\
 
-The hyperparameter $\lambda$ is called learning rate and set to a small number to learn slowly and to avoid overfitting. Also notice, that the loss function defined here is the objective loss function used for gradient boosting and is defined differently than the loss function, when constructing a single tree. The objective loss function we will use for Gradient Boosting will be the log-loss derived in (\ref{loss_fct}). This allows us to handle the class imbalance (but we will leave out the regularization term for now).\\
+The hyperparameter $\lambda$ is called learning rate and set to a small number to learn slowly and to avoid overfitting. Also notice, that the loss function defined here is the objective loss function used for gradient boosting and is defined differently than the loss function, when constructing a single tree. We will compare the two objective loss functions for Gradient Boosting derived in (\ref{loss_fct_wl}) and (\ref{loss_fct_fl}) with different hyperparameters. This allows us to handle the class imbalance. We will leave out the regularization term $h(\cdot)$ in this case.\\
+To apply the log-loss function in (\ref{loss_fct_wl}) or (\ref{loss_fct_fl}) we need to deliver the gradient as well as the hessian of this function. Herewith the lightgbm-package again aims to improve time-cost as is it takes the second order Taylor Expansion to compute the optimal loss minimizing $\hat{f}_{b}(X)$ in each iteration $b=1,...,B$. These are calculated in the appendix. \\
+The main cost with boosted trees is learning the single trees, and the most time-consuming part in that is to find the best split-points. Therefore we will use the package lightgbm in our prediction model, developed by (XY), which aims to tackle this issue. The so called histogram-based approach is to bin the features which creates high efficiency gains during searching for the optimal splits, especially for continuous variables. \\
+Another important aspect to note about lightgbm's implementation of boosted trees is the fact that the base trees grow leaf-wise instead of depth-wise. As proposed by Friedman et al (Friedman et al, 2000), the idea is to extend nodes in first-best order. Thereby, the best node is the one which maximally reduces the sum of the tree loss function in the resulting regions. This enables the possibility that a first-best split is found at a node in level $r+1$ eventhough in level $r$ only one of two nodes are split. (Show graphically?) \\
+If we let the trees grow without tree structure restrictions to full trees, both the leaf-wise and depth-wise approach will result in the same trees. As all gradient boosters rely on shallow trees, the combination of hyperparameters such as the maximum number of leaves, the minimum loss reduction required for a further split and first-best split approach result in a better (cite!!!) shallow tree structure. \\
+What is regalpha and reglambda in boosted trees? \\
+There are a lot of hyperparameters which allow to tune the learning structure. They can be split into the hyperparameters for single tree structure and hyperparameters for the learning process. In Table (\ref{hp_lgbm}) is an overview of the hyperparameters we will focus on and the corresponding values we will use for grid search. \\
 
-To apply the log-loss function in (\ref{loss_fct}) we need to deliver the gradient as well as the hessian of this function. Herewith the lightgbm-package again aims to improve time-cost as is it takes the second order Taylor Expansion to compute the optimal loss minimizing $\hat{f}_{b}(X)$ in each iteration $b=1,...,B$. This can be computed as follows: \\
+\setlength{\tabcolsep}{10pt} % Default value: 6pt
+\renewcommand{\arraystretch}{1.5}
 
-The main cost with boosted trees is learning the single trees, and the most time-consuming part in that is to find the best split-points. Therefore we will use the package lightgbm in our prediction model, developped by (XY), which aims to tackle this issue. The so called histogram-based approach is to bin the features which creates high efficiency gains during searching for the optimal splits, especially for continuous variables. \\
-Leaf-wise vs. Level-wise learning ? \\
-
-
-
-There are a lot of hyperparameters which allow to tune the tree structure. Most important are the maximum depth and the minimum number of samples in a node (and XY). In Figure (1) is an overview of the hyperparameters we will focus on and the corresponding values we will use for grid search.
-
-\begin{table}[]
-    \begin{tabular}{llll}
+\begin{table} \label{hp_lgbm}
+    \centering
+    \caption{Hyperparameters for lgbm}
+    \begin{tabular}{c|l|l|l|} 
     \hline
-    \multicolumn{1}{l|}{}                             & \multicolumn{1}{l|}{Hyperparameter}      & Description                                             & \multicolumn{1}{l|}{Grid Search Values}      \\ \hline
-    \multicolumn{1}{c|}{\multirow{7}{*}{\begin{sideways} Boosting \end{sideways}}}    & \multicolumn{1}{l|}{learning rate}       & Boosting learning rate $\lambda$                        & \multicolumn{1}{l|}{Shrinking learning rate} \\
-    \multicolumn{1}{c|}{}                             & \multicolumn{1}{l|}{n\_estimators}       & Number of boosted Trees B                               & \multicolumn{1}{l|}{}                        \\
-    \multicolumn{1}{c|}{}                             & \multicolumn{1}{l|}{objective}           & Objective and/or objective loss function                & \multicolumn{1}{l|}{Custom loss function}    \\
-    \multicolumn{1}{c|}{}                             & \multicolumn{1}{l|}{subsample}           & Subsample ratio of training data used                   & \multicolumn{1}{l|}{}                        \\
-    \multicolumn{1}{c|}{}                             & \multicolumn{1}{l|}{subsample\_freq}     & Frequency of the usage of subsample                     & \multicolumn{1}{l|}{}                        \\
-    \multicolumn{1}{c|}{}                             & \multicolumn{1}{l|}{reg\_alpha}          & L1 regularization term on weights                       & \multicolumn{1}{l|}{}                        \\
-    \multicolumn{1}{c|}{}                             & \multicolumn{1}{l|}{reg\_lambda}         & L2 regularization term on weights                       & \multicolumn{1}{l|}{}                        \\ \hline
-    \multicolumn{1}{l|}{\multirow{5}{*}{\begin{sideways} Single Tree \end{sideways}}} & \multicolumn{1}{l|}{num\_leaves}         & Maximum tree leaves                                     & \multicolumn{1}{l|}{}                        \\
-    \multicolumn{1}{l|}{}                             & \multicolumn{1}{l|}{subsample\_for\_bin} & Number of samples for constructing bin                  & \multicolumn{1}{l|}{}                        \\
-    \multicolumn{1}{l|}{}                             & \multicolumn{1}{l|}{min\_split\_gain}    & Minimum loss reduction for further split on a leaf node & \multicolumn{1}{l|}{}                        \\
-    \multicolumn{1}{l|}{}                             & \multicolumn{1}{l|}{min\_child\_samples} & Minimum number of data needed in a new region           & \multicolumn{1}{l|}{}                        \\
-    \multicolumn{1}{l|}{}                             & \multicolumn{1}{l|}{colsample\_bytree}   & Subsample ratio of columns constructing each tree       & \multicolumn{1}{l|}{}                        \\ \hline
+    \multicolumn{1}{l|}{}                                       & Hyperparameter      & Description                                                                                      & Grid Search Values       \\ 
+    \hline
+    \multirow{7}{*}{\begin{sideways} Boosting \end{sideways}}                         & learning rate       & Boosting learning rate $\lambda$                                                                & Shrinking learning rate  \\
+    & n\_estimators       & Number of boosted Trees B              &                          \\
+    & objective           & Objective or objective loss function   & Custom loss function     \\
+    & subsample           & Subsample ratio of training data used  &                          \\
+    & subsample\_freq     & Frequency of usage of subsample        &                          \\
+    & reg\_alpha          & L1 regularization term on weights      &                          \\
+    & reg\_lambda         & L2 regularization term on weights      &                          \\
+    \hline
+    \multicolumn{1}{l|}{\multirow{5}{*}{\begin{sideways} Single Tree \end{sideways}}} & num\_leaves         & Maximum number of tree leaves          &                          \\
+    \multicolumn{1}{l|}{}                                       & subsample\_for\_bin & Number of samples for constructing bin &                          \\
+    \multicolumn{1}{l|}{}                                       & min\_split\_gain    & Minimum loss reduction for~split       &                          \\
+    \multicolumn{1}{l|}{}                                       & min\_child\_samples & Minimum number of data in new region   &                          \\
+    \multicolumn{1}{l|}{}                                       & colsample\_bytree   & Subsample ratio of columns for tree    &                          \\
+    \hline
     \end{tabular}
-    \end{table}
+\end{table}
+
+\subsubsection*{(iii) Explainable Boosting Classifiers}
+
+Explainable boosting machines (EBM) were developed by researchers at Microsoft (InterpretML: A Unified Framework for Machine Learning Interpretability) and aim to have high accuracy as most complex models, while maintaning an easy interpretable approach. It is maintained by the functional form which is similar to the standard GAM-Model, developed originally in 1987 by Hastie and Tibshirani (Generalized Additive Models): \\
+
+\begin{equation} \label{gam}
+    g(X_{t}) = \beta_{0} \sum_{j=1}^{J} k_{j}(X^{j}_{t}) + \epsilon_{t} \\
+\end{equation}
+
+Thereby $J$ is the number of characteristics and $k_{j}(\cdot)$ is the characteric function for characteristic $j$. In standard GAM-models $k_{j}(\cdot)$ is approximated by scatterplot smoothers (Wenn noch Zeit und Platz ist, Running mean oder running lines smoother erklären, aber eigentlich unnötig wallah.). In EBM the approximation is allowed to be a complex modern learner such as a decision tree, random forest or gradient-boosted-trees. 
+
+\textit{Parameter and hyperparameter search for the models}
+
+All inner parameters of the models will be constructed using a 3-fold cross-validation to ensure generalizable training scores and the selection of the best generalizable model. Additionally, the best hyperparameters of each model captured with a randomized implementation of grid-search. \\
+Results of grid-search hier? \\
 
 \subsection{Model Evaluation Metrics} \par
+
+To get an unbiased estimate of the generalized performance of our model, it has to be tested on unseen data, which was not part of the training process. In order to espacially ensure time generalizability of our models, we use unseen data of an additional different timestamp to generate evaluations. \\
+For the evaluation of classification models there is a huge variety of metrics. As already stated, selecting the correct metric is crucial. Let us first define the possible outcomes of our model with the confusion matrix: \\
+
+\renewcommand{\arraystretch}{2}
+
+\begin{table}
+    \centering
+    \caption{Confusion Matrix}
+    \begin{tabular}{ll|c|c}
+    \vcell{}                    & \multicolumn{1}{l}{\vcell{}}         & \multicolumn{2}{c}{\vcell{}}                       \\[-\rowheight]
+    \printcellmiddle            & \multicolumn{1}{l}{\printcellmiddle} & \multicolumn{2}{c}{\printcellbottom}               \\
+    \vcell{}                    & \vcell{}                             & \vcell{$\hat{C}=0$}     & \vcell{$\hat{C}=1$}      \\[-\rowheight]
+    \printcellmiddle            & \printcellmiddle                     & \printcellbottom        & \printcellbottom         \\ 
+    \cline{2-4}
+    \multirow{2}{*}{\rotcell{}} & \multicolumn{1}{c|}{$C=0$}           & \# True Negatives (TN)  & \# False Positives (FP)  \\ 
+    \cline{2-4}
+                                & \multicolumn{1}{c|}{$C=1$}           & \# False Negatives (FN) & \# True Positives (TP)  
+    \end{tabular}
+\end{table}
+
+Using accuracy ($TN+TP/N$) will lead to very unreliable estimates of the performance with rare events. The accuracy will be high indicating a good fit, even if the churners are not frequently detected. Therefore it makes sense to either use the precision ($TP/TP+FP$) or the recall ($TP/TP+FN$) metrics. A combination of both measures is provided by the F1-score which is the harmonic mean of both metrics an therefore still defined between 0 and 1 (ganzer Paragraph: Mining with rarity): \\
+
+\begin{equation} \label{f1}
+    \begin{aligned}
+        F1 = \frac{2*precision*recall}{precision+recall} \\
+    \end{aligned}
+\end{equation}
+
+Another widely used metric is the area under the receiver-operating-characteristic-curve (AUROC). The ROC-curve represents the tradeoff between the false-positive-rate ($FPR=FP/FP+TN$) on the X-axis and recall on the y-axis of a classifier using different cutoff values $\tau$. \\
+
+The ROC always starts at the lower left-hand corner (FPR = 0, Recall = 0) for $\tau=1$, and ends at the upper right-hand corner (FPR = 1, Recall = 1) for $\tau=0$. The other values of the curve are defined by alternating $\tau$ in values between 0 and 1. An area under the curve of 1 is the best score and 0.5 is the worst score, representing the classifier of a simple coin-flipping algorithm. \\
+This measure also has its downsides with very small positive classes, as the FPR is highly dependend on the number of negatives. The FPR will only improve by a small amount if a there is a substantial decrease in FP's as the number of TN's will be very high for most $\tau$'s. \\
+For a small number of positive examples it makes more sense to look at the area under the precision-recall-curve (AUPRC) (cite: Area Under the Precision-Recall Curve: Point Estimates and Confidence Intervals). There the curve also plots values for the recall on the X-axis and precision on the y-axis for different $\tau$'s. It now starts at the upper left corner (Recall = 0, Precision = 1) for $\tau=1$ (als * hinzufügen, dass für TP und FP gegen 0, Precision gegen 1) and ends in the lower right corner (Recall = 1, Precision = 0) for $\tau=0$ (als * hinzufügen, dass precision gegen 0 geht, da wir sehr viele FP's haben. Die Kurve wird niemals genau unten rechts aufhören.). \\
+It is plotted as follows as an example:\\
+Now when it comes to interpreting the metric, it is not as easy as the AUROC. The baseline now is not a simple coin-flip, but instead defined by the ratio of churners (\#C/N) in the data. Every AUPRC score above that baseline is an improvement from predicting customers as Churners randomly using a Bernoulli-distribution for each ($C^{(i)}{\raise.17ex\hbox{$\scriptstyle\mathtt{\sim}$}} B(\frac{\#P}{N})$). \\
+For calculating the AUROC or the AUPRC there are multiple methods. All of them rely on estimates, as the true function of the curve can only be approximated using a finite number of cutoff values $\tau$. (Mehr darauf eingehen, und Area Under the Precision-Recall Curve: Point Estimates and Confidence Intervals zitieren, falls du noch Zeit hast). \\
+
 
 \newpage
 
