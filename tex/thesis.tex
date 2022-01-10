@@ -21,6 +21,7 @@
 \usepackage{vcell}
 \usepackage{arydshln}
 \usepackage{textcomp}
+\usepackage{diagbox}
 \usetikzlibrary{trees}
 \graphicspath{{./images/}}
 
@@ -270,6 +271,44 @@ Also include introductory words for the other subsections. \\
 
 Put the ETL process here? Including multiple time stamps explanation here instead of Chapter 2? \\
 
+\textit{Feature Selection}
+
+A full collection of the characteristics in our data can be found in (where?). As we have many features and most of them are highly correlated, preprocessing this dataset is essential. The goal is to retain only the minimal optimal subset of features. In many cases, due to multicollinearity in models with many characteristics, dimension reduction techniques can even improve the accuracy of models in production. \\
+In the current literature of machine learning there are many approaches for feature selection, ranging from manual selection to fully automated selection procedures. We will use the "Maximum Relevance Minimum Redundancy" (MRMR) - approach designed by Ubers machine-learning researchers Zhao et al (Maximum Relevance and Minimum Redundancy Feature Selection Methods for a Marketing Machine Learning Platform). The authors focus on designing an algorithm which detects the best subset of features instead of the subset of best features. The latter is often used in applications of machine learning, where a model is trained and features are selected a posteriori based on certain feature importance scores for that model. This however does not eliminate redundant features, which in reality do not improve the model performance due to being already represented in correlated other input features. \\
+Using the best subset of features also helps us to identify the optimal length of the request window $m$. As we want to examine the impact of quotation data for predicting customer churn, we will include multiple number-of-request features with different values for $m$ in our unfiltered selection $J$. These are expected to be highly correlated, which additionally delivers a possibility to monitor the effectiveness of the MRMR. \\
+MRMR works iteratively, so at each iteration a new best feature is identified and added to the list of selected features. Once a feature is selected it cannot ever be unselected in the next iterations. One drawback of this approach is that the number of iterations and therefore the number of selected features has to be predefined. We will extend it however in a way that we iterate through the entire feature set $J$ and cache the resulting sets and scores of each iteration. So the resulting iterative process starts with an empty selected $S$ and full unselected $U$ set and ends with a full $S$ and an empty $U$. This lets us define the optimal number of iterations retroactively. \\
+The algorithm MRMR got his name from the fact, that at each iteration $j$ a new feature is selected into $S$ that has the maximum relevance with respect to the target variable and minimum redundancy with respect to the features that are already in $S$. Therefore at each iteration and for each of the remaining features of $U$ the following score is computed: \\
+
+\begin{equation} \label{score_raw}
+    score_{i}(feature_{i \in U}) = \frac{relevance(feature_{i \in U}, C)}{redundancy(feature_{i \in U}, features \in S)} \\
+\end{equation}
+
+The sets $U$ and $S$ get updated each iteration by transfering the feature with the highest score from $U$ to $S$. In their paper, Zhao et al present multiple metrics for both relevance and redundancy. We will focus on one approach which yielded the best result in their paper and slightly adapt it to our problem, as we have categorical features in our data. \\
+At each iteration the relevance of the remaining features in $U$ has to be computed with a new model with only these remaining features. We will use gradient boosted trees and its package "lgbm" in python, as it can handle categorical features on the one hand and has a build in for calculating feature importance by counting the usage of the feature on the other. How gradient boosting and its feature importance works will be explained in "Machine Learning Models and Interpretability". \\
+For redundancy the measure depends on the scales of measurement for the features. Thereby we need to pay attention to the fact, that the redundany scores need to stay comparable for the different scales. The different situations and their measures can be summarized by this table: \\
+
+\setlength{\tabcolsep}{10pt} % Default value: 6pt
+\renewcommand{\arraystretch}{1.5}
+
+\begin{table}
+    \centering
+    \caption{Redundancy Score based on Scale}
+    \begin{tabular}{l|l|l|l}
+    \diagbox{{[}k]}{{[}i]} & nominal & ordinal & continuous      \\
+    \hline
+    nominal                &         &         &                 \\
+    \hline
+    ordinal                &         &         &                 \\
+    \hline
+    continuous             &         &         & BP-Correlation
+\end{tabular}
+\end{table}
+
+The slightly modified MRMR-approach we will use can therefore be illustrated by this simplified pseudo-code: \\
+1. Initialize empty list: listU = $[]$ \\
+2. Initialize full list: listS = X.columns \\
+3. for j in the feature list J: \\
+
 \subsection{Handling Class Imbalance} \par
 
 Studying the rarity of an event in the context of machine learning has become an important challange in the recent two decades. Rare events, such as a customer churning in the
@@ -424,9 +463,6 @@ If we let the trees grow without tree structure restrictions to full trees, both
 What is regalpha and reglambda in boosted trees? \\
 There are a lot of hyperparameters which allow to tune the learning structure. They can be split into the hyperparameters for single tree structure and hyperparameters for the learning process. In Table (\ref{hp_lgbm}) is an overview of the hyperparameters we will focus on and the corresponding values we will use for grid search. \\
 
-\setlength{\tabcolsep}{10pt} % Default value: 6pt
-\renewcommand{\arraystretch}{1.5}
-
 \begin{table} \label{hp_lgbm}
     \centering
     \caption{Hyperparameters for lgbm}
@@ -460,9 +496,10 @@ Explainable boosting machines (EBM) were developed by researchers at Microsoft (
 \end{equation}
 
 Thereby $J$ is the number of characteristics and $k_{j}(\cdot)$ is the characteristic function for characteristic $j$. In standard GAM-models $k_{j}(\cdot)$ is approximated by scatterplot smoothers (Wenn noch Zeit und Platz ist, Running mean oder running lines smoother erklären, aber eigentlich unnötig wallah.). In EBM the approximation for $k_{j}(\cdot)$ is allowed to be done by a complex modern learner such as a decision tree or a random forest. \\
-As the name of the method already reveals, gradient boosting is applied to improve the preceeding trees in direction of the gradient of the loss function. The main difference to the standard gradient boosting classifier is that no longer one tree fits all characteristics $\hat{g}_{b}(X)=\hat{g}_{b}(X^{1}, ..., X^{J})$ in each iteration $b=1,..,B$. Instead in each iteration, the algorithms cycles through all characteristics to improve the single characteristic function $k_{j}(\cdot)$, where it is most needed. By cycling through the features one at a time and maintaining a low learning rate the feature order does not matter and the potential problem of multicollinearity is reduced. \\
+As the name of the method already reveals, gradient boosting is applied to improve the preceeding trees in direction of the gradient of the loss function. The main difference to the standard gradient boosting classifier is that no longer one tree fits all characteristics $\hat{g}_{b}(X)=\hat{g}_{b}(X^{1}, ..., X^{J})$ in each iteration $b=1,..,B$. Instead in each iteration, the algorithm cycles through all characteristics to improve the single characteristic function $k_{j}(\cdot)$, where it is most needed. By cycling through the features one at a time and maintaining a low learning rate the feature order does not matter and the potential problem of multicollinearity is reduced. \\
 Unfortunetaly there is still a huge gap between standard GAM-models and full complexity models in terms of predictive power, even if we allow for non-linearities in $k_{j}(\cdot)$. Full complexity models, such as gradient boosted trees and deep neural nets, have the advantage of allowing for an arbitrary number of interactions between features. To allow for pairwise interactions, EBM's make use of the idea of GA2M-models developed by (Lou and Caruana: Accurate Intelligible Models with Pairwise Interactions). The resulting characteristic functions $k_{m,n}(X^{m}, X^{n})$, (where $m\neq n$ and $m,n \in \{1,...,J\}$) are still interpretable with a heatmap on the two dimensional $X^{m}, X^{n}$-plane. Also, results from Lou and Caruana not only show that GA2M-models have a high improvement in accuracy over GAM-models, but also compete with high complexity-models in most applications. \\
-EBM's also make use of an algorithm called "FAST" ()
+There are a number of approaches to detect the right feature interactions for our model as in (ANOVA: Generalized functional anova diagnostics for high-dimensional functions of dependent variables, Partial Dependence Function: Predictive learning via rule ensembles, GUIDE: Regression trees with unbiased variable selection and interaction detection, Grove: Detecting statistical interactions with additive groves of trees). These methods however are either computationally inefficient or almost even infeasible with high-dimensional data. Therefore we will use the "FAST" approach presented by Lou et al. (Accurate Intelligible Models with Pairwise Interactions), which are also used by the EBM-package. \\
+If we assume that we have $J$ characteristics in our data the amount of possible pairwise interactions equals $\binom{J}{2} = \frac{J(J-1)}{2}$. As a result, the complexity of finding the right subset of interactions is very high for large $J$. 
 
 Our modelling approach with EBM will be as follows: 1. FAST to collect the right number of interactions 2. MRMR to select the right features 3. Gradient Boosting the resulting GA2M
 
