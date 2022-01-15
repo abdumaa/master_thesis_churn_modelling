@@ -14,3 +14,8 @@
 .*.lb
 *.sty
 vcell.tex
+*.bcf
+*.xml
+*.bbl
+*.blg
+*.synctex.gz
