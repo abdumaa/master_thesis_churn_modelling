@@ -24,11 +24,14 @@
 \usepackage{textcomp}
 \usepackage{diagbox}
 \usepackage{caption}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
 \DeclareCaptionType{equ}[][]
 \usepackage[style=numeric]{biblatex}
 \addbibresource{literaturechurn.bib}
 \usetikzlibrary{trees}
 \graphicspath{{./images/}}
+\DeclareMathOperator*{\argmin}{arg\,min}
 
 
 \begin{document}
@@ -208,7 +211,7 @@ Put the ETL process here? Including multiple time stamps explanation here instea
 
 A full collection of the explanatory features in our data can be found in the appendix. As we have many features and some of them are highly correlated, preprocessing this dataset is essential. The goal is to retain only the minimal optimal subset of features. In many cases, due to multicollinearity in models with many features, dimension reduction techniques can even improve the accuracy of models. \\
 In the current literature of machine learning there are many approaches for feature selection, ranging from manual selection to fully automated selection procedures. We use the "Maximum Relevance Minimum Redundancy" (MRMR) - approach designed by Ubers machine-learning researchers Zhao et al. \cite{mrmr}. The authors focus on designing an algorithm which detects the best subset of features instead of the subset of best features. The latter is often used in applications of machine learning, where a model is trained and features are selected a posteriori based on certain feature importance scores for that model. This however does not eliminate redundant features, which in reality do not improve the model performance due to being already represented in correlated other input features. \\
-Using the best subset of features also helps us to identify the optimal length of the request window $m$. As we want to examine the impact of quotation data for predicting customer churn, we include multiple number-of-request features with different values for $m$ in our unfiltered selection of features $F$. These are expected to be highly correlated, which additionally delivers a possibility to monitor the effectiveness of the MRMR. \\
+Using the best subset of features also helps us to identify the optimal length of the request window $m$. As we want to examine the impact of quotation data for predicting customer churn, we include multiple number-of-request features with different values for $m$ in our unfiltered selection of features $F$. These are obviously expected to be highly correlated, which additionally delivers a possibility to monitor the effectiveness of the MRMR. \\
 MRMR works iteratively, so at each iteration a new best feature is identified and added to the list of selected features. Once a feature is selected it cannot ever be unselected in the next iterations. One drawback of this approach is that the number of iterations and therefore the number of selected features has to be predefined. We extend it however in a way that we iterate through the entire feature set $F$ and cache the resulting sets and scores of each iteration. So the resulting iterative process starts with an empty selected $S$ and full unselected $U$ set and ends with a full $S$ and an empty $U$. This lets us define the optimal number of iterations retroactively. \\
 The algorithm MRMR got his name from the fact, that at each iteration $j$ a new feature is selected into $S$ that has the maximum relevance with respect to the target variable scaled by the redundancy with respect to the features that are already in $S$. Therefore at each iteration and for each of the remaining features of $U$ the following score is computed: \\
 
@@ -217,8 +220,8 @@ The algorithm MRMR got his name from the fact, that at each iteration $j$ a new 
 \end{equation}
 
 The sets $U$ and $S$ get updated each iteration by transfering the feature with the highest score from $U$ to $S$. In their paper, Zhao et al. present multiple metrics for both relevance and redundancy. We focus on one approach which yielded the best result in their paper and slightly adapt it to our problem, as we have categorical features in our data. \\
-At each iteration the relevance of the remaining features in $U$ has to be computed with a new model with only these remaining features. We use gradient boosted trees and its package "lightgbm" in python. It can handle categorical features on the one hand and has a build in method for calculating feature importance on the other hand. There, feature importance is computed as the number of times that specific feature is selected for a split. So this feature importance is assigned to the corresponding features as the relevance score. How gradient boosted trees work is explained in chapter 3.4. \\
-For redundancy an average over certain standardized metrics for the relationship between the to be evaluated feature and the features already in $S$ needs to be computed. These metrics depend on the scales of measurement for the features. Zhao et al. only cover the case of continuous features and their relationship. We extend the redundancy score to categorical and ordinal features. Thereby we need to pay attention to the fact, that the scores need to stay comparable for the different scales. Therefore the chosen metrics are all standardized to values between 0 and 1, where 0 indicates no and 1 the strongest possible relationship. The different scale-pairs and their relationship metrics can be summarized by table 1 (see \cite{correlation}): \\
+At each iteration the relevance of the remaining features in $U$ has to be computed with a new model with only these remaining features. We use gradient boosted trees and its package "lightgbm" (LGBM) in python in each iteration to score the new relevance of each remaining feature. LGBM can handle categorical features on the one hand and has a build in method for calculating feature importance on the other hand. There, feature importance is computed as the number of times that specific feature is selected for a split. So this feature importance is assigned to the corresponding features as the relevance score. How gradient boosted trees work is explained in chapter 3.4. \\
+For redundancy an average over certain standardized metrics for the relationship between the to be evaluated feature and the features already in $S$ needs to be computed. These metrics depend on the scales of measurement for the features. Zhao et al. only cover the case of continuous features and their relationship. We extend the redundancy score to categorical and dichotomous features. Thereby we need to pay attention to the fact, that the scores need to stay comparable for the different scales. Therefore the chosen metrics are all standardized to values between 0 and 1, where 0 indicates no and 1 the strongest possible relationship. The different scale-pairs and their relationship metrics can be summarized by table 1 (see \cite{correlation}): \\
 
 \setlength{\tabcolsep}{10pt} % Default value: 6pt
 \renewcommand{\arraystretch}{1.5}
@@ -227,23 +230,42 @@ For redundancy an average over certain standardized metrics for the relationship
     \centering
     \caption{Relationship Metric based on Scale}
     \begin{tabular}{l|l|l|l}
-    \diagbox{}{} & nominal & ordinal & continuous      \\
+    \diagbox{}{} & nominal & dichotomous & continuous      \\
     \hline
     nominal                & Cramers-V-Correlation &         &                 \\
     \hline
-    ordinal                & Rank-Biserial-Correlation & Spearman's Correlation &                 \\
+    dichotomous            & Cramers-V-Correlation & Cramers-V-Correlation &                 \\
     \hline
-    continuous             & Point-Biserial-Correlation & Spearman's Correlation & Bravais-Pearson-Correlation
+    continuous             & Eta-Correlation & Point-Biserial-Correlation & Bravais-Pearson-Correlation
 \end{tabular}
 \end{table}
 
-Redundancy is then calculated by the mean of over the relationship scores as follows: \\
+Redundancy is then calculated by the mean of the relationship scores as follows: \\
 
 \begin{equation} \label{redundancy}
     Redundancy(feature_{i \in U}, features \in S) = \frac{1}{n(S)} \sum_{s=1}^{n(S)} relationship(i, s)
 \end{equation}
 
-- The slightly modified MRMR-approach we use can therefore be illustrated by this simplified pseudo-code: \\
+The slightly modified MRMR-approach we use can therefore be illustrated by this simplified pseudo-code: \\
+\begin{algorithm}
+\caption{MRMR-Algortihm}\label{alg:mrmr}
+\begin{algorithmic}
+    \State $corrmatrix \gets corr(X)$
+    \State $S \gets \left[ \right]$
+    \State $U \gets \left[X.columns\right]$
+    \State $cachedict \gets \{\}$
+    \For{j in range len(X.columns)}
+        \State $relvector \gets LGBMscorer(U)$
+        \State $redvector \gets mean(corrmatrix\left[U\right]\left[S\right])$
+        \State $scorevector \gets relvector/redvector$
+        \State $bestfeat \gets max(scorevector).name$
+        \State $bestscore \gets max(scorevector)$
+        \State $S.append(bestfeat)$
+        \State $U.drop(bestfeat)$
+        \State $cachedict.append(j,bestfeat, bestscore)$
+    \EndFor
+\end{algorithmic}
+\end{algorithm}
 - The results of MRMR for our dataset are as follows: Show using graphics of average score of each iteration. Argue with an elbow criterium? \\
 
 \subsection{Handling Class Imbalance} \par
@@ -263,14 +285,19 @@ The second basic sampling method is the upsampling approach. This method simply 
 \subsubsection*{(iii) SMOTE}
 
 The more advanced SMOTE-approach (Synthetic Minority Oversampling Technique) \cite{smote} also creates more artifficial examples of the minority class. Instead of simply duplicating some rows SMOTE creates new nearest neighbors in terms of feature values for the minority class examples. While constructing the feature values of the new example $(N + 1)$ (where N is the size of the unsampled dataset) as a new nearest neighbor for example $i$ of the
-minority class one has to differentiate between continuous and nominal features. The k-nearest neighbors for the minority class are typically constructed with the Euclidean Distance for continuous features and the Value Distance Metric for nominal features (TODO: maybe include other distance measures here? Mahalanobis Distance to calculate out correlation?).\\
-A. Continuous features: \\
-A.1) Construct difference between corresponding feature value of example $i$ and one of its k nearest neighbors. \\
-A.2) Multiply this difference with a random value drawn from a uniform distribution between 0 and 1. \\
-A.3) Construct the feature value of the new example by adding the multiplied difference to the feature value of example $i$. \\
-B. Nominal features: \\
-B.1) Choose the feature value which is the majority vote between the feature value $i$ and its k nearest neighbors. \\
-B.2) Assign this value to the corresponding feature of the new example. \\
+minority class one has to differentiate between continuous and nominal features. The k-nearest neighbors for the minority class are typically constructed with the Euclidean Distance for continuous features and the Value Distance Metric for nominal features (TODO: maybe include other distance measures here? Mahalanobis Distance to calculate out correlation?).
+\vspace{3mm}
+
+\textbf{A. Continuous features:} \\
+1) Construct difference between corresponding feature value of example $i$ and one of its k nearest neighbors. \\
+2) Multiply this difference with a random value drawn from a uniform distribution between 0 and 1. \\
+3) Construct the feature value of the new example by adding the multiplied difference to the feature value of example $i$.
+\vspace{3mm}
+
+\textbf{B. Nominal features:} \\
+1) Choose the feature value which is the majority vote between the feature value $i$ and its k nearest neighbors. \\
+2) Assign this value to the corresponding feature of the new example. \vspace{3mm}
+
 With this approach it is ensured that the model learns more about the neighborhood regions of the minority class. It decreases the probability, that the model overfits to the duplicates created in upsampling. \\
 
 \subsubsection*{(iv) Cost-Sensitive Classifiers} \label{Cost-Sensitive Classifiers}
@@ -346,7 +373,7 @@ Classification trees have a different approach on builing a prediction model for
 \begin{equation} \label{dec_tree}
     \begin{aligned}
         S_{1}(j, r) = \{X\mid X^{j}\geq r\} , S_{2}(j, r) = \{X\mid X^{j}< r\} \\
-        \{j, r\} \in \min_{j, r} \sum_{i:X^{(i)}\in S_{1}(j, r)}l(C^{(i)}; X^{(i)}, \widehat{p^{k}}) + \sum_{i:X^{(i)}\in S_{2}(j, r)}l(C^{(i)}; X^{(i)}, \widehat{p^{k}})
+        \{j, r\} \in \argmin_{j, r} \sum_{i:X^{(i)}\in S_{1}(j, r)}l(C^{(i)}; X^{(i)}, \widehat{p^{k}}) + \sum_{i:X^{(i)}\in S_{2}(j, r)}l(C^{(i)}; X^{(i)}, \widehat{p^{k}})
     \end{aligned}
 \end{equation}
 
@@ -366,6 +393,20 @@ The splits at each node are performed until certain criteria for the loss functi
 In most applications the predictions of a single classification tree have high variance due to overfitting to the training data. The accuracy in the prediction on unseen data will therefore be rather poor compared to the accuracy during training. Random forests \cite{randomforest} are designed to reduce the variance of the predictions, by averaging over predictions of multiple independent trees. This phenomenon is called "Wisdom of the Crowds" and is underlined by the fact that the average of multiple estimators for the same parameter will have the same bias but a smaller variance (how much depends on N and the correlation (which is 0 if we assume that the base learners are independent) of the estimators) than a single estimator. \\
 The current literature (cite!!!) however agrees on the fact that Boosted Tree Algorithms outperform Random Forests, and therefore also a single tree. Therefore we focus on the core methodology and hyperparameters of boosted trees in the following. \\
 The idea of boosted trees for classification is to have a sequence of dependent base learners (trees), which improve in terms of accuracy where it is most needed. Thereby, the base learners $\hat{g}_{b}(X)$ ($b=1,..,B$) are constructed in a shallow shape, avoiding an overfitted single learner. Additionally the $\hat{g}_{b}(X)$ are now regression trees, which output values in $(-\infty, \infty)$. So for the optimal split at the nodes of each tree the squared error reduction of the log-odds? (besser erklären, bzw statt classification trees einfach regression trees einführen?) are now being compared. To get an interpretable result we again have to apply the sigmoid function $f(\cdot)$ to get a probability in $[0, 1]$. The resulting loss of each tree is then fitted by the preceeding trees. So the procedure can be summarized by this pseudo code: \\
+
+\begin{algorithm}
+\caption{Boosted-Trees-Algortihm}\label{alg:boostedtrees}
+\begin{algorithmic}
+    \State $\hat{G}(X) \gets 0$
+    \State $L \gets \sum_{i=1}^{N} l(C^{(i)}, f(\hat{G}(X^{(i)})))$
+    \For{b in range(1, B)}
+        \State Fit tree $\hat{g}_{b}(X)$ which minimizes $L = \sum_{i=1}^{N} l\Big(C^{(i)}, f\big(\hat{G}(X^{(i)}) + \hat{g}_{b}(X^{(i)})\big)\Big)$
+        \State $\hat{G}(X) \gets \hat{G}(X) + \lambda\hat{g}_{b}(X)$
+    \EndFor
+    \State $\hat{C} = \hat{f}(X) = f(\sum_{b=1}^{B}\lambda\hat{g}_{b}(X))$
+\end{algorithmic}
+\end{algorithm}
+
 1. Set first fit to $\hat{G}(X) := 0$ and loss to $L := \sum_{i=1}^{N} l(C^{(i)}, f(\hat{G}(X^{(i)})))$ \\
 2. For the sequence of trees $b=1,..,B$ repeat: \\
 2.1 Fit shallow tree $\hat{g}_{b}(X)$ which minimizes the Loss $L = \sum_{i=1}^{N} l\Big(C^{(i)}, f\big(\hat{G}(X^{(i)}) + \hat{g}_{b}(X^{(i)})\big)\Big)$ \\
@@ -416,9 +457,10 @@ Explainable boosting machines (EBM) were developed by researchers at Microsoft \
 
 Thereby $M$ is the number of features and $k_{j}(\cdot)$ is the so called shape function for feature $j$. In standard GAM-models $k_{j}(\cdot)$ is approximated by scatterplot smoothers (Wenn noch Zeit und Platz ist, Running mean oder running lines smoother erklären, aber eigentlich für diese Arbeit unwichtig.). In EBM the approximation for $k_{j}(\cdot)$ is allowed to be calculated by a complex modern learner such as a decision tree or a random forest. \\
 As the name of the method already reveals, gradient boosting is applied to improve the preceeding trees in direction of the gradient of the loss function. The main difference to the standard gradient boosting classifier is that no longer one tree fits all features $\hat{g}_{b}(X)=\hat{g}_{b}(X^{1}, ..., X^{M})$ in each iteration $b=1,..,B$. Instead in each iteration, the algorithm cycles through all features to improve the single shape function $k_{j}(\cdot)$, where it is most needed. By cycling through the features one at a time and maintaining a low learning rate the feature order does not matter and the potential problem of multicollinearity is reduced. \\
-Unfortunetaly there is still a huge gap between standard GAM-models and full complexity models in terms of predictive power, even if we allow for non-linearities in $k_{j}(\cdot)$. Full complexity models, such as gradient boosted trees and deep neural nets, have the advantage of allowing for an arbitrary number of interactions between features. To allow for pairwise interactions, EBM's make use of the idea of GA$^{2}$M-models developed by Lou et al. \cite{ga2m}. The resulting shape functions $k_{m,n}(X^{m}, X^{n})$, (where $m\neq n$ and $m,n \in \{1,...,M\}$) are still interpretable with a heatmap on the two dimensional $X^{m}, X^{n}$-plane. Also, results from Lou et al. not only show that GA2M-models have a high improvement in accuracy over GAM-models, but also compete with high complexity-models in most applications. \\
-There are a number of approaches to detect the right feature interactions for our model as in \cite{anova_interaction}, \cite{pdf_interaction}, \cite{guide}, \cite{grove}. These methods however are either computationally inefficient or almost even infeasible with high-dimensional data. Therefore we use the "FAST" approach presented by Lou et al. \cite{ga2m}, which are also available in the EBM-package. \\
-If we assume that we have $M$ features in our data the amount of possible pairwise interactions equals $\binom{M}{2} = \frac{M(M-1)}{2}$. As a result, the complexity of finding the right subset of interactions is very high for large $M$. (Explain FAST) \\
+Unfortunetaly there is still a huge gap between standard GAM-models and full complexity models in terms of predictive accuracy, even if we allow for non-linearities in $k_{j}(\cdot)$. Full complexity models, such as gradient boosted trees and deep neural nets, have the advantage of allowing for an arbitrary number of interactions between features. To allow for pairwise interactions, EBM's make use of the idea of GA$^{2}$M-models developed by Lou et al. \cite{ga2m}. The resulting shape functions $k_{m,n}(X^{m}, X^{n})$, (where $m\neq n$ and $m,n \in \{1,...,M\}$) are still interpretable with a heatmap on the two dimensional $X^{m}, X^{n}$-plane. Also, results from Lou et al. not only show that GA2M-models have a high improvement in accuracy over GAM-models, but also compete with high complexity-models in most applications. \\
+There are a number of approaches to detect the best set of feature interactions for our model as in \cite{anova_interaction}, \cite{pdf_interaction}, \cite{guide}, \cite{grove}. These methods however are either computationally inefficient or almost even infeasible with high-dimensional data. Therefore we use the "FAST" approach presented by Lou et al. \cite{ga2m}, which are also available in the EBM-package. \\
+FAST's structure is based on a greedy forward stagewise selection strategy. It can be compared to the MRMR in a way that it starts with an empty set of selected pairs and an unselected set containing all possible feature pairs. In each iteration all possible unselected pairs are used seperately to fit the current objective loss function resulting from the additive model including only the already selected pairs. The pair with the highest loss improvement is selected in that iteration. The iteration stops, when the objective loss function stops improving for any other inclusion of a pair. \\
+If we assume that we have $M$ features in our data the amount of possible pairwise interactions equals $\binom{M}{2} = \frac{M(M-1)}{2}$. As a result, calculating the set of interaction functions and fitting all possible new models in each iteration is very time consuming for large $M$. FAST therefore builds the interaction functions more efficiently by defining optimized quadrants in the space of the two features and taking the mean values of each quadrant. Please refer to \cite{ga2m} for more insights on this procedure. \\
 - Our modelling approach with EBM will be as follows: 1. FAST to collect the right number of interactions 2. MRMR to select the right features 3. Gradient Boosting the resulting GA2M
 
 \textit{Parameter and hyperparameter search for the models}
