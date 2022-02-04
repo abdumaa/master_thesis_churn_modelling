@@ -510,10 +510,13 @@ The modelling approach of this work tries to answer both questions as much as po
 
 \subsubsection*{Explaining Gradient Boosted Trees}
 
-For a complex model such as gradient boosted trees the model structure struggles to explain itself. Therefore the current literature relies on simple explanation models, which are defined as interpretable approximations of the original model. We shortly summarize and apply two mostly used methods SHAP (Shapley Additive explanation cite) and LIME (cite).
+For a complex model such as gradient boosted trees the model structure struggles to explain itself. Therefore the current literature relies on simple explanation models, which are defined as interpretable approximations of the original model and explain individual predictions (local model-agnostic methods). We shortly summarize and apply two mostly used methods SHAP (Shapley Additive explanation cite) and LIME (cite).
 \vspace{3mm}
 
 \textit{SHAP}
+
+SHAP's theoritcal foundation originally lies in the Shapley Values from Game Theory \cite{shapley}. To link the game theoretical approach to machine learning, a prediction can be explained by assuming that each feature value of the instance is a “player” in a game where the prediction is the payout. The Shapley values then tell us how to fairly distribute the “payout” among the features. \\
+
 
 \vspace{3mm}
 
