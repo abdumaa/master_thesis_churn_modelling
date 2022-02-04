@@ -159,10 +159,9 @@ def generate_toydata(p_churn=0.1, len=100000, to_csv=True):
 
 generate_toydata()
 
-sim_df.columns
+sim_df = generate_toydata(to_csv=False)
 
 # Playground
-y_ds = X_ds["diff_vjnbe_avg_1"]
 x_ds = sim_df.copy()
 
 lr = LinearRegression(n_jobs=-1).fit(x_ds, y_ds)
