@@ -164,11 +164,6 @@ sim_df = generate_toydata(to_csv=False)
 # Playground
 x_ds = sim_df.copy()
 
-lr = LinearRegression(n_jobs=-1).fit(x_ds, y_ds)
-lr.coef_
-lr.intercept_
-x_ds["n_requests_1_fit_raw"] = round(lr.predict(x_ds), 2)
-
 np.mean(
     np.random.poisson(
         8, len(sim_df)
@@ -179,8 +174,6 @@ sns.histplot(
         8, len(sim_df)
     ) * np.random.negative_binomial(15, 0.7, len(sim_df))
 )
-sns.histplot(x=X_ds.loc[X_ds["storno"] == 0]["as_months_vbeg_alter"])
-np.mean(X_ds.loc[X_ds["storno"] == 0]["as_months_vbeg_alter"])
 sns.histplot(x=sim_df["diff_vjnbe_avg_1"])
 sim_df.groupby("storno").mean()
 # Plots
@@ -191,5 +184,5 @@ sns.catplot(
     orient="h",
     height=2.5,
     aspect=4,
-    data=X_ds,
+    data=sim_df
 )
