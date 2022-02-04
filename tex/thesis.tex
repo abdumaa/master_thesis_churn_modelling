@@ -407,12 +407,6 @@ The idea of boosted trees for classification is to have a sequence of dependent 
 \end{algorithmic}
 \end{algorithm}
 
-1. Set first fit to $\hat{G}(X) := 0$ and loss to $L := \sum_{i=1}^{N} l(C^{(i)}, f(\hat{G}(X^{(i)})))$ \\
-2. For the sequence of trees $b=1,..,B$ repeat: \\
-2.1 Fit shallow tree $\hat{g}_{b}(X)$ which minimizes the Loss $L = \sum_{i=1}^{N} l\Big(C^{(i)}, f\big(\hat{G}(X^{(i)}) + \hat{g}_{b}(X^{(i)})\big)\Big)$ \\
-2.2 Update fit to: $\hat{G}(X) := \hat{G}(X) + \lambda\hat{g}_{b}(X)$\\
-3. Final prediction is then: $\hat{C} = \hat{f}(X) = f(\sum_{b=1}^{B}\lambda\hat{g}_{b}(X))$ \\
-
 - Gradient boosted bagged trees noch? \\
 
 The hyperparameter $\lambda$ is called learning rate and set to a small number to learn slowly and to avoid overfitting. It should not be confused with the $\lambda$ of regularization (change notation in regularization?). Also notice, that the loss function defined here is the objective loss function used for gradient boosting and is defined differently than the loss function, when constructing a single tree. We use the same two objective loss functions for Gradient Boosting derived in (\ref{loss_fct_wl}) and (\ref{loss_fct_fl}) and perform hyperparameter optimization to get the best set of hyperparameters belonging to these loss functions. As already stated, this allows us to handle the class imbalance. We leave out the regularization term $h(\cdot)$ in GBT.\\
@@ -507,6 +501,23 @@ Now when it comes to interpreting the metric, it is not as easy as the AUROC. Th
 For calculating the AUROC or the AUPRC there are multiple methods. All of them rely on estimates, as the true function of the curve can only be approximated using a finite number of cutoff values $\tau$. (Mehr darauf eingehen). \\
 
 
+\subsection{Interpreting the Models} \par
+
+One of the main tasks of this work is to interpret the structure of our models. More precisely, we want to know how each feauture interacts with the probability of a churn. Espacially the usage of quotation data turns out to have high predicitve power, but we want to check if the assumed interaction is true and how the shape of the interaction in our models really looks like. This question is also answered for other features which turn out to have high predictive importance in our model. \\
+In prediction models in general, one has to make a decision between two questions the modelling approach needs to answer. The first question is what is predicted and the second is why is it predicted. In application where missclassifications have low consequences or/and the why question does not deliver any benifit the interpretability may be neglected. Therefore e.g. in movie recommender systems (low missclassification costs) or in object detection applications (why is not important) very complex models are used to ensure that the What question is answered correctly. \\
+For many applications however answering the what question correctly is not enough. Espacially econometricians accept a drop in predictive accuracy for a better answer to the why question. That is why in econometric applications the modelling approach relies on simple models such as linear or logistic regression. Thereby, the focus is on testing necessary assumptions and the significance of parameters which make the interpretability of such model reliable. \\
+The modelling approach of this work tries to answer both questions as much as possible. Therefore we do not rely on complex black-box models which only aim to have high predictive accuracy but at the same time are not solely interested on statistical significance of parameters for reliable inference. Therefore we use modern techniques which maximize the utility of jointly answering both questions. As our two models GBT and EBM have different approaches in terms of interpretability we split the interpretation of the models in two parts. Thereby we compare and check if the findings are in line with each other.\\
+
+\subsubsection*{Explaining Gradient Boosted Trees}
+
+For a complex model such as gradient boosted trees the model structure struggles to explain itself. Therefore the current literature relies on simple explanation models, which are defined as interpretable approximations of the original model. We shortly summarize and apply two mostly used methods SHAP (Shapley Additive explanation cite) and LIME (cite).
+\vspace{3mm}
+
+\textit{SHAP}
+
+\vspace{3mm}
+
+\textit{LIME}
 \newpage
 
 \thispagestyle{empty}
