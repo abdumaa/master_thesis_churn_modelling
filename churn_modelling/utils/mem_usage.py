@@ -40,3 +40,6 @@ def reduce_mem_usage(df, verbose=True):
             )
         )
     return df
+
+def do_sth():
+    print("sth")

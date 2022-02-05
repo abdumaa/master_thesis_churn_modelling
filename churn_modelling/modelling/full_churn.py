@@ -1,12 +1,11 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import RandomizedSearchCV
-
 from scipy.special import expit
 from scipy.stats import randint as sp_randint
 from scipy.stats import uniform as sp_uniform
 import seaborn as sns
-import scikitplot as skplt
+# import scikitplot as skplt
 import matplotlib.pyplot as plt
 
 from sklearn.metrics import (
@@ -18,24 +17,23 @@ from sklearn.metrics import (
     average_precision_score,
 )
 
-# from sklearn.impute import SimpleImputer
 import lightgbm as lgb
 
-from .custom_loss import FocalLoss, WeightedLoss
-from preprocessing import (
-    to_categorical,
-    split_train_test,
-    resample,
-    mrmr,
-)
-from churn_modelling.utils import reduce_mem_usage
+from churn_modelling.preprocessing.categorical import to_categorical
+from churn_modelling.preprocessing.mrmr import mrmr
+from churn_modelling.preprocessing.resample import resample
+from churn_modelling.preprocessing.splitting import split_train_test
+from churn_modelling.modelling.custom_loss import FocalLoss, WeightedLoss
+from churn_modelling.utils.mem_usage import reduce_mem_usage
+from churn_modelling.preprocessing.mrmr import _correlation_scorer
 
+df_temp = pd.read_csv('../data/toydata.csv', index_col=0)
 
 df = df_temp.copy()
-X["storno"] = y
 
+df_corr = _correlation_scorer(df)
 # MRMR
-iterations_df = mrmr(X, target="storno", cv=5)
+iterations_df = mrmr(df, target="storno", cv=5)
 iterations_df["ITERATION"] = iterations_df["ITERATION"].astype(int)
 iterations_df["MRMR_SCORE"] = (
     iterations_df["MRMR_SCORE"].replace(np.inf, 5000000.0).replace("", 0.0)
@@ -53,6 +51,10 @@ sns.relplot(
 # Reduce mem usage
 df = reduce_mem_usage(df)
 
+# Split X and y
+X = df.iloc[:, 1:]
+y = df["storno"]
+
 # Transform df categorical dtypes for lgbm
 X, cat_features = to_categorical(df=X)
 
@@ -69,12 +71,12 @@ X_train, X_test, y_train, y_test = split_train_test(X=X, y=y)
 X_train, X_val, y_train, y_val = split_train_test(X=X_train, y=y_train)
 
 # Downsample Training set
-X_train["storno_corrected"] = y_train
-df_ds_train = resample(X_train, y="storno_corrected")
-X_train = df_ds_train[features]
-y_train = df_ds_train["storno_corrected"]
+# X_train["storno_corrected"] = y_train
+# df_ds_train = resample(X_train, y="storno_corrected")
+# X_train = df_ds_train[features]
+# y_train = df_ds_train["storno_corrected"]
 
-len(y_train[y_train == 1]) / len(y_train)
+# len(y_train[y_train == 1]) / len(y_train)
 
 
 ### lgbm
@@ -90,8 +92,6 @@ def learning_rate_decay(current_iter, base=0.1, decay_factor=0.99):
 
 fl = FocalLoss(gamma=3, alpha=0.55)
 
-# best_params = grid_search.best_params_
-
 lgbm = lgb.LGBMClassifier(
     boosting_type="gbdt",  # also try 'dart' and 'goss'
     objective="binary",  # or fl.lgb_obj
@@ -101,10 +101,9 @@ lgbm = lgb.LGBMClassifier(
     n_estimators=5000,
     random_state=1,
     silent=True,
-    importance_type="gain",
-    # **best_params,
+    importance_type="split",
 )
-fit_params = {  # Test set used for early stopping criterion
+fit_params = {  # Val set used for early stopping criterion
     "early_stopping_rounds": 30,
     # "eval_class_weight": "balanced",
     "eval_metric": "logloss",  # or fl.lgb_eval
@@ -112,7 +111,7 @@ fit_params = {  # Test set used for early stopping criterion
     # "init_score": np.full_like(y_train, fl.init_score(y_train), dtype=float), # use y_val for initializer because y_train is downsampled # noqa
     "callbacks": [lgb.reset_parameter(learning_rate=learning_rate_decay)],
     "verbose": 100,
-    "categorical_feature": cat_features,
+    # "categorical_feature": cat_features,
     # "monotonicity"
 }
 params = {
@@ -186,9 +185,9 @@ predictions = lgbm_fit.predict(X_test)
 preds = lgbm_fit.predict_proba(X_test)
 pred_list = [p[1] for p in preds]
 predmod = [0 if p < 0.8 else 1 for p in pred_list]  # (pred_list >= 0.5).astype("int")
-acc = accuracy_score(y_test, predictions)  # 0.6844
-prec = precision_score(y_test, predictions)  # 0.0219 TP/(TP + FP)
-rec = recall_score(y_test, predictions)  # 0.6673 TP/(TP + FN)
+acc = accuracy_score(y_test, predictions)  # 0.945
+prec = precision_score(y_test, predictions)  # 0.9189 TP/(TP + FP)
+rec = recall_score(y_test, predictions)  # 0.395 TP/(TP + FN)
 confusion_matrix(y_test, predictions)
 confusion_matrix(y_test, predmod)
 
@@ -200,8 +199,8 @@ sns.distplot(pred_list)
 skplt.metrics.plot_roc_curve(y_test, preds)
 plt.show()
 
-skplt.metrics.plot_precision_recall_curve(y_test, preds)
-plt.show()
+# skplt.metrics.plot_precision_recall_curve(y_test, preds)
+# plt.show()
 
 feat_imp = pd.Series(
     lgbm_fit.best_estimator_.feature_importances_, index=X_train.columns
