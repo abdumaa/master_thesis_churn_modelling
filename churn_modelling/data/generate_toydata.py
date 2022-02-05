@@ -11,19 +11,19 @@ def generate_toydata(p_churn=0.1, len=100000, to_csv=True):
         1, p_churn, len
     )
     storno_0_n_requests_1 = np.random.poisson(
-        0.011, len
+        0.05, len
     ) * np.random.negative_binomial(1, 0.05, len)
     storno_1_n_requests_1 = np.random.poisson(
-        0.11, len
+        0.5, len
     ) * np.random.negative_binomial(1, 0.05, len)
     sim_df["n_requests_1"] = np.where(
         sim_df["storno"] == 1, storno_1_n_requests_1, storno_0_n_requests_1
     )
     storno_0_n_requests_2 = np.random.poisson(
-        0.011, len
+        0.05, len
     ) * np.random.negative_binomial(1, 0.05, len)
     storno_1_n_requests_2 = np.random.poisson(
-        0.04, len
+        0.2, len
     ) * np.random.negative_binomial(1, 0.05, len)
     sim_df["n_requests_2"] = np.where(
         sim_df["storno"] == 1,
@@ -31,10 +31,10 @@ def generate_toydata(p_churn=0.1, len=100000, to_csv=True):
         sim_df["n_requests_1"] + storno_0_n_requests_2,
     )
     storno_0_n_requests_3 = np.random.poisson(
-        0.011, len
+        0.05, len
     ) * np.random.negative_binomial(1, 0.05, len)
     storno_1_n_requests_3 = np.random.poisson(
-        0.02, len
+        0.1, len
     ) * np.random.negative_binomial(1, 0.05, len)
     sim_df["n_requests_3"] = np.where(
         sim_df["storno"] == 1,
@@ -42,10 +42,10 @@ def generate_toydata(p_churn=0.1, len=100000, to_csv=True):
         sim_df["n_requests_2"] + storno_0_n_requests_3,
     )
     storno_0_n_requests_6 = np.random.poisson(
-        0.033, len
+        0.15, len
     ) * np.random.negative_binomial(1, 0.05, len)
     storno_1_n_requests_6 = np.random.poisson(
-        0.033, len
+        0.15, len
     ) * np.random.negative_binomial(1, 0.05, len)
     sim_df["n_requests_6"] = np.where(
         sim_df["storno"] == 1,
@@ -53,10 +53,10 @@ def generate_toydata(p_churn=0.1, len=100000, to_csv=True):
         sim_df["n_requests_3"] + storno_0_n_requests_6,
     )
     storno_0_n_requests_12 = np.random.poisson(
-        0.066, len
+        0.3, len
     ) * np.random.negative_binomial(1, 0.05, len)
     storno_1_n_requests_12 = np.random.poisson(
-        0.066, len
+        0.3, len
     ) * np.random.negative_binomial(1, 0.05, len)
     sim_df["n_requests_12"] = np.where(
         sim_df["storno"] == 1,
@@ -159,30 +159,28 @@ def generate_toydata(p_churn=0.1, len=100000, to_csv=True):
 
 generate_toydata()
 
-sim_df = generate_toydata(to_csv=False)
-
 # Playground
-x_ds = sim_df.copy()
-
-np.mean(
-    np.random.poisson(
-        8, len(sim_df)
-    ) * np.random.negative_binomial(15, 0.7, len(sim_df))
-)
-sns.histplot(
-    x=np.random.poisson(
-        8, len(sim_df)
-    ) * np.random.negative_binomial(15, 0.7, len(sim_df))
-)
-sns.histplot(x=sim_df["diff_vjnbe_avg_1"])
-sim_df.groupby("storno").mean()
-# Plots
-sns.catplot(
-    x="n_requests_1",
-    y="storno",
-    kind="box",
-    orient="h",
-    height=2.5,
-    aspect=4,
-    data=sim_df
-)
+# x_ds = sim_df.copy()
+# 
+# np.mean(
+#     np.random.poisson(
+#         8, len(sim_df)
+#     ) * np.random.negative_binomial(15, 0.7, len(sim_df))
+# )
+# sns.histplot(
+#     x=np.random.poisson(
+#         8, len(sim_df)
+#     ) * np.random.negative_binomial(15, 0.7, len(sim_df))
+# )
+# sns.histplot(x=sim_df["diff_vjnbe_avg_1"])
+# sim_df.groupby("storno").mean()
+# # Plots
+# sns.catplot(
+#     x="n_requests_1",
+#     y="storno",
+#     kind="box",
+#     orient="h",
+#     height=2.5,
+#     aspect=4,
+#     data=sim_df
+# )

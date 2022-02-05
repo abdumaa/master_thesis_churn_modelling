@@ -196,8 +196,8 @@ confusion_matrix(y_test, predmod)
 
 sns.distplot(pred_list)
 
-skplt.metrics.plot_roc_curve(y_test, preds)
-plt.show()
+# skplt.metrics.plot_roc_curve(y_test, preds)
+# plt.show()
 
 # skplt.metrics.plot_precision_recall_curve(y_test, preds)
 # plt.show()
