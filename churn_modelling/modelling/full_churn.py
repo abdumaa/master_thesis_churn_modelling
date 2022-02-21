@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import ast
 from sklearn.model_selection import RandomizedSearchCV
 from scipy.special import expit
 from scipy.stats import randint as sp_randint
@@ -27,18 +28,19 @@ from churn_modelling.modelling.custom_loss import FocalLoss, WeightedLoss
 from churn_modelling.utils.mem_usage import reduce_mem_usage
 from churn_modelling.preprocessing.mrmr import _correlation_scorer
 
-df_temp = pd.read_csv('../data/toydata.csv', index_col=0)
 
+# Load data
+df_temp = pd.read_csv('../data/toydata.csv', index_col=0)
 df = df_temp.copy()
 
-df_corr = _correlation_scorer(df)
+# Train Test Split
+df_train, df_test = split_train_test(df=df)
+
+# Downsample Training Set
+df_ds_train = resample(df_train, y="storno", frac=0.1)
+
 # MRMR
-iterations_df = mrmr(df, target="storno", cv=5)
-iterations_df["ITERATION"] = iterations_df["ITERATION"].astype(int)
-iterations_df["MRMR_SCORE"] = (
-    iterations_df["MRMR_SCORE"].replace(np.inf, 5000000.0).replace("", 0.0)
-)
-iterations_df.head(13)
+iterations_df = mrmr(df_ds_train, target="storno", cv=5)
 sns.relplot(
     x="ITERATION",
     y="MRMR_SCORE",
@@ -48,15 +50,22 @@ sns.relplot(
     data=iterations_df,
 )
 
+# Dimension reduction
+feature_set = ast.literal_eval(iterations_df["SELECTED_SET"][20])
+feature_set.append("storno")
+df_ds_train = df_ds_train[feature_set]
+df_test = df_test[feature_set]
+
 # Reduce mem usage
-df = reduce_mem_usage(df)
+df_ds_train = reduce_mem_usage(df_ds_train)
+df_test = reduce_mem_usage(df_test)
 
 # Split X and y
-X = df.iloc[:, 1:]
-y = df["storno"]
+y_ds_train = df_ds_train["storno"]
+X_ds_train = df_ds_train.drop(["storno"], axis=1)
+y_test = df_test["storno"]
+X_test = df_test.drop(["storno"], axis=1)
 
-# Transform df categorical dtypes for lgbm
-X, cat_features = to_categorical(df=X)
 
 # # Impute missings with mean
 # imp = SimpleImputer(strategy="mean")
@@ -66,17 +75,8 @@ X, cat_features = to_categorical(df=X)
 # X_imputed.head()
 
 
-# Train, val, test split
-X_train, X_test, y_train, y_test = split_train_test(X=X, y=y)
-X_train, X_val, y_train, y_val = split_train_test(X=X_train, y=y_train)
-
-# Downsample Training set
-# X_train["storno_corrected"] = y_train
-# df_ds_train = resample(X_train, y="storno_corrected")
-# X_train = df_ds_train[features]
-# y_train = df_ds_train["storno_corrected"]
-
-# len(y_train[y_train == 1]) / len(y_train)
+# Train, val split
+X_ds_train, X_val, y_ds_train, y_val = split_train_test(X=X_ds_train, y=y_ds_train)
 
 
 ### lgbm
@@ -90,37 +90,31 @@ def learning_rate_decay(current_iter, base=0.1, decay_factor=0.99):
     return lr if lr > 1e-3 else 1e-3
 
 
-fl = FocalLoss(gamma=3, alpha=0.55)
+fl = FocalLoss(gamma=2, alpha=0.72)
 
 lgbm = lgb.LGBMClassifier(
-    boosting_type="gbdt",  # also try 'dart' and 'goss'
-    objective="binary",  # or fl.lgb_obj
+    boosting_type="gbdt",
+    objective=fl.lgb_obj,
     max_depth=-1,
-    # class_weight="balanced",
     n_jobs=-1,
     n_estimators=5000,
     random_state=1,
-    silent=True,
     importance_type="split",
 )
-fit_params = {  # Val set used for early stopping criterion
+fit_params = {
     "early_stopping_rounds": 30,
-    # "eval_class_weight": "balanced",
-    "eval_metric": "logloss",  # or fl.lgb_eval
+    "eval_metric": fl.lgb_eval,
     "eval_set": [(X_val, y_val)],
-    # "init_score": np.full_like(y_train, fl.init_score(y_train), dtype=float), # use y_val for initializer because y_train is downsampled # noqa
-    "callbacks": [lgb.reset_parameter(learning_rate=learning_rate_decay)],
-    "verbose": 100,
-    # "categorical_feature": cat_features,
+    "init_score": np.full_like(y_val, fl.init_score(y_ds_train), dtype=float),
+    "callbacks": [
+        lgb.reset_parameter(learning_rate=learning_rate_decay),
+        lgb.log_evaluation(100),
+        lgb.early_stopping(30)
+    ],
     # "monotonicity"
 }
 params = {
-    "num_leaves": sp_randint(6, 50),  # Max number of leaves in base learner
-    # "max_depth": [-1],  # Max depth for base learners
-    # "learning_rate": [0.1],
-    # "n_estimators": [100],  # Number of trees
-    # "subsample_for_bin ": [200000],  # Number of samples for constructing bins (200000 default value) # noqa
-    # "min_split_gain": [0.0],  # Minimum loss reduction required to make a further partition on a leaf node of the tree # noqa
+    "num_leaves": sp_randint(6, 50),
     "min_child_weight": [
         1e-5,
         1e-2,
@@ -128,17 +122,16 @@ params = {
         1,
         1e1,
         1e4,
-    ],  # Minimum sum of instance weight (hessian) needed in a child (leaf) # noqa
+    ],
     "min_child_samples": sp_randint(
         100, 500
-    ),  # Minimum number of data needed in a child (leaf) # noqa
+    ),
     "subsample": sp_uniform(
         loc=0.4, scale=0.6
-    ),  # Subsample ratio of the training instance. low in baseline model. Increase later to 1.0!!! # noqa
-    # "subsample_freq": [0],  # Frequency of subsample, <=0 means no enable. Every k iteration bagging is used # noqa
+    ),
     "colsample_bytree": sp_uniform(
         loc=0.6, scale=0.4
-    ),  # Subsample ratio of columns when constructing each tree, lower means less computation time, (overfitting) higher means hgher accuracy? # noqa
+    ),
     "reg_alpha": [0, 1, 5, 10, 100],
     "reg_lambda": [0, 1, 5, 10, 100],
 }
@@ -156,25 +149,26 @@ scorer = make_scorer(
 lgbm_rsc = RandomizedSearchCV(
     estimator=lgbm,
     param_distributions=params,
-    n_iter=10,
+    n_iter=100,
     # scoring=scorer, # using estimators scoring
     random_state=43,
     n_jobs=-1,
-    cv=3,
+    cv=5,
     # refit="Accuracy", set to default ("True")
     # return_train_score=True,
     verbose=True,
 )
-lgbm_fit = lgbm_rsc.fit(X_train, y_train, **fit_params)
+lgbm_fit = lgbm_rsc.fit(X_ds_train, y_ds_train, **fit_params)
 print(
     "Best score reached: {} with params: {} ".format(
         lgbm_fit.best_score_, lgbm_fit.best_params_
     )
 )
+
 # for custom loss
-predictions = expit(fl.init_score(y_train) + lgbm_fit.predict(X_test))
+predictions = expit(fl.init_score(y_ds_train) + lgbm_fit.predict(X_test))
 predictions = (predictions >= 0.5).astype("int")
-preds = expit(fl.init_score(y_train) + lgbm_fit.predict_proba(X_test))
+preds = expit(fl.init_score(y_ds_train) + lgbm_fit.predict_proba(X_test))
 acc = accuracy_score(y_test, predictions)  #
 prec = precision_score(y_test, predictions)  # TP/(TP + FP)
 rec = recall_score(y_test, predictions)  # TP/(TP + FN)
@@ -203,6 +197,6 @@ sns.distplot(pred_list)
 # plt.show()
 
 feat_imp = pd.Series(
-    lgbm_fit.best_estimator_.feature_importances_, index=X_train.columns
+    lgbm_fit.best_estimator_.feature_importances_, index=X_ds_train.columns
 )
 feat_imp.nlargest(20).plot(kind="barh", figsize=(8, 10))

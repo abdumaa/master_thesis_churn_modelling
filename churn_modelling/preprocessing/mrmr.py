@@ -13,7 +13,7 @@ def _lgbm_scorer(
     """Create relevance score for MRMR."""
     y = df[target]
     X = df.drop(target, axis=1)
-    X, cat_features = to_categorical(X)
+    X = to_categorical(X)
 
     gbt = lgb.LGBMClassifier(
         objective="binary",
