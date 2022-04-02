@@ -25,6 +25,7 @@ from churn_modelling.preprocessing.mrmr import mrmr
 from churn_modelling.preprocessing.resample import resample
 from churn_modelling.preprocessing.splitting import split_train_test
 from churn_modelling.modelling.custom_loss import FocalLoss, WeightedLoss
+from churn_modelling.modelling.lgbm import LGBM
 from churn_modelling.utils.mem_usage import reduce_mem_usage
 from churn_modelling.preprocessing.mrmr import _correlation_scorer
 
