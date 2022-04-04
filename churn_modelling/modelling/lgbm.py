@@ -90,7 +90,7 @@ class LGBM:
     def get_featureset_from_latest_run(self, include_target=True):
         """Select feature set based on set of latest run."""
         list_of_fits = glob.glob(
-            "/home/I019053/code/pricing_k_cancellation_prevention/pricing_k_cancellation_prevention/modelling/lgbm_fits/*"  # find solution for that # noqa
+            "/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/*"  # find solution for that # noqa
         )
         latest_file = max(list_of_fits, key=os.path.getctime)
 
@@ -202,7 +202,7 @@ class LGBM:
             lgbm = lgbm_fit
         elif predict_from_latest_fit and lgbm_fit is None:
             list_of_fits = glob.glob(
-                "/home/I019053/code/pricing_k_cancellation_prevention/pricing_k_cancellation_prevention/modelling/lgbm_fits/*"  # find solution for that # noqa
+                "/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/*"  # find solution for that # noqa
             )
             latest_file = max(list_of_fits, key=os.path.getctime)
             last_part = latest_file.rsplit("lgbm_fit_", 1)[1]
@@ -225,7 +225,7 @@ class LGBM:
         custom_objective = lgbm.get_params()["objective"] != "binary"
         if custom_objective:  # expected cached init_score to add to preds
             init_score = load(
-                f"/home/I019053/code/pricing_k_cancellation_prevention/pricing_k_cancellation_prevention/modelling/init_scores/lgbm_fit_{last_part}"  # find solution for that # noqa
+                f"/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/init_scores/lgbm_fit_{last_part}"  # find solution for that # noqa
             )
             preds_proba = expit(init_score + lgbm.predict(X))
             preds = (preds_proba >= 0.5).astype("int")

@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import ast
+import glob
+from joblib import dump, load
 from sklearn.model_selection import RandomizedSearchCV, cross_validate
 from scipy.special import expit
 from scipy.stats import randint as sp_randint
@@ -9,6 +11,7 @@ import seaborn as sns
 # import scikitplot as skplt
 import matplotlib.pyplot as plt
 
+from sklearn.inspection import PartialDependenceDisplay
 from sklearn.metrics import (
     make_scorer,
     precision_score,
@@ -102,32 +105,32 @@ lgbm_fit = model_pl.fit_lgbm(
 y_true = df_test["storno"]
 X_test = df_test.drop(["storno"], axis=1)
 
-preds, preds_proba = model_pl.predict(X=X_test)
+preds, preds_proba = model_pl.predict(
+    X=X_test,
+    predict_from_latest_fit=True,
+    lgbm_fit=None
+)
 
-# for custom loss
-predictions = expit(fl.init_score(y_ds_train) + lgbm_fit.predict(X_test))
-predictions = (predictions >= 0.5).astype("int")
-preds = expit(fl.init_score(y_ds_train) + lgbm_fit.predict_proba(X_test))
-acc = accuracy_score(y_test, predictions)  #
-prec = precision_score(y_test, predictions)  # TP/(TP + FP)
-rec = recall_score(y_test, predictions)  # TP/(TP + FN)
-confusion_matrix(y_test, predictions)  # 0 TP, 0 FP!
+pred6 = [0 if p < 0.6 else 1 for p in preds_proba]  # (pred_list >= 0.5).astype("int")
+acc = accuracy_score(y_true, preds)  # 0.945
+prec = precision_score(y_true, preds)  # 0.9189 TP/(TP + FP)
+rec = recall_score(y_true, preds)  # 0.395 TP/(TP + FN)
+confusion_matrix(y_true, preds)
 
-# without custom loss
-predictions = lgbm_fit.predict(X_test)
-preds = lgbm_fit.predict_proba(X_test)
-pred_list = [p[1] for p in preds]
-predmod = [0 if p < 0.8 else 1 for p in pred_list]  # (pred_list >= 0.5).astype("int")
-acc = accuracy_score(y_test, predictions)  # 0.945
-prec = precision_score(y_test, predictions)  # 0.9189 TP/(TP + FP)
-rec = recall_score(y_test, predictions)  # 0.395 TP/(TP + FN)
-confusion_matrix(y_test, predictions)
-confusion_matrix(y_test, predmod)
+
+# Get latest lgbm model
+list_of_fits = glob.glob(
+    "/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/*"  # find solution for that # noqa
+)
+latest_file = max(list_of_fits, key=os.path.getctime)
+last_part = latest_file.rsplit("lgbm_fit_", 1)[1]
+lgbm_fit = load(latest_file)
+
 
 
 # visualizations
 
-sns.distplot(pred_list)
+PartialDependenceDisplay.from_estimator(lgbm_fit, X_test, ["n_requests_3"], target=y_true)
 
 # skplt.metrics.plot_roc_curve(y_test, preds)
 # plt.show()
@@ -139,3 +142,4 @@ feat_imp = pd.Series(
     lgbm_fit.best_estimator_.feature_importances_, index=X_ds_train.columns
 )
 feat_imp.nlargest(20).plot(kind="barh", figsize=(8, 10))
+
