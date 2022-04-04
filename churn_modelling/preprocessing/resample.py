@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-def resample(df, y="storno", sampling="down", frac="balanced", seed=1234):
+def resample(df_to_sample, y="storno", sampling="down", frac="balanced", seed=1234):
     """Resample data to handle class imbalance."""
     if sampling == "down":
         resample_class = 0
@@ -13,16 +13,16 @@ def resample(df, y="storno", sampling="down", frac="balanced", seed=1234):
         raise ValueError(f"Sampling method {sampling} not supported")
 
     if frac == "balanced":
-        to_be_resampled = len(df.query(f"{y} == {resample_class}"))
-        base = len(df.query(f"{y} != {resample_class}"))
+        to_be_resampled = len(df_to_sample.query(f"{y} == {resample_class}"))
+        base = len(df_to_sample.query(f"{y} != {resample_class}"))
         frac = base / to_be_resampled
 
     return pd.concat(
         [
-            df.query(f"{y} == {resample_class}").sample(
+            df_to_sample.query(f"{y} == {resample_class}").sample(
                 frac=frac, replace=False, random_state=seed
             ),
-            df.query(f"{y} != {resample_class}"),
+            df_to_sample.query(f"{y} != {resample_class}"),
         ],
         sort=False,
         ignore_index=True,

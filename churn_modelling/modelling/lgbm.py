@@ -53,7 +53,7 @@ class LGBM:
                 df_to_sample=self.df, y=self.target, sampling=sampling, frac=frac
             )
 
-    def feature_selection(self, df_to_dimreduce=None, cv=5, sample=True):
+    def feature_selection(self, df_to_dimreduce=None, cv=5, sample=False):
         """Create feature_selection_df using MRMR-Scorer."""
         if df_to_dimreduce is not None:
             return mrmr(
@@ -183,12 +183,12 @@ class LGBM:
             time = datetime.now().strftime("%y%m%d%H%M%S")
             dump(
                 lgbm_fit.best_estimator_,
-                f"/home/I019053/code/pricing_k_cancellation_prevention/pricing_k_cancellation_prevention/modelling/lgbm_fits/lgbm_fit_{time}.joblib",  # find solution for that # noqa
+                f"/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_{time}.joblib",  # find solution for that # noqa
             )
             if focal_loss is not None:
                 dump(
                     focal_loss.init_score(y_train),
-                    f"/home/I019053/code/pricing_k_cancellation_prevention/pricing_k_cancellation_prevention/modelling/init_scores/lgbm_fit_{time}.joblib",  # find solution for that # noqa
+                    f"/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/init_scores/lgbm_fit_{time}.joblib",  # find solution for that # noqa
                 )
 
         return lgbm_fit.best_estimator_

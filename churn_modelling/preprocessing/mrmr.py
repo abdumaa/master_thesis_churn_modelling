@@ -41,7 +41,7 @@ def _lgbm_scorer(
 
     importances_df["avg_importance"] = importances_df.mean(axis=1)
 
-    return importances_df.sort_values(by=["avg_importance"], ascending=False)
+    return importances_df#.sort_values(by=["avg_importance"], ascending=False)
 
 
 # Oder target encoding für cat/ordinal features?
@@ -177,14 +177,18 @@ def _correlation_scorer(df):
     return df_corr
 
 
-def mrmr(df, target, cv=5):
+def mrmr(df_to_dimreduce, target, cv=5, sample=False):
     """Iterate over entire feature set to get all possible best subsets."""
+
+    # Create sample
+    if sample:
+        df_to_dimreduce = df_to_dimreduce
     # Create Correlation Matrix
     print("------------------ COMPUTE CORRELATION MATRIX")
-    df_corr = _correlation_scorer(df)
+    df_corr = _correlation_scorer(df_to_dimreduce)
 
     # Create empty and full basket of features
-    unselected_list = df.columns.to_list()
+    unselected_list = df_to_dimreduce.columns.to_list()
     unselected_list.remove(target)  # exclude target feature
     selected_list = []
     iterations_df = pd.DataFrame(
@@ -194,12 +198,13 @@ def mrmr(df, target, cv=5):
             "SELECTED_SET": [f"{selected_list}"],
             "SELECTED_FEATURE": [""],
             "MRMR_SCORE": [""],
+            "LOG_MRMR_SCORE": [""],
         }
     )
     print("------------------ START ITERATING THROUGH FEATURE SET")
-    for i in range(1, len(df.columns)):
+    for i in range(1, len(df_to_dimreduce.columns)):
         print(f"------------------ ITERATION STEP {i}")
-        df_temp = pd.concat([df[unselected_list], df[target]], axis=1)
+        df_temp = pd.concat([df_to_dimreduce[unselected_list], df_to_dimreduce[target]], axis=1)
         relevance_df = _lgbm_scorer(df=df_temp, target=target, cv=cv)
         if i == 1:
             selected_feature, mrmr_score = (
@@ -228,8 +233,9 @@ def mrmr(df, target, cv=5):
             f"{selected_list}",
             selected_feature,
             mrmr_score,
+            round(np.log(mrmr_score), 2),
         ]
 
     print("------------------ END ITERATING THROUGH FEATURE SET")
 
-    return iterations_df
+    return iterations_df.replace('', 0)
