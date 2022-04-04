@@ -313,10 +313,10 @@ def generate_toydata(p_churn=0.01, len=100000, to_csv=True):
     else:
         return sim_df
 
-df = generate_toydata(to_csv=False)
-sns.histplot(x=df["n_requests_1"])
-df["n_requests_1"].value_counts()
-df.groupby("storno").mean()
+generate_toydata(to_csv=True)
+# sns.histplot(x=df["n_requests_1"])
+# df["n_requests_1"].value_counts()
+# df.groupby("storno").mean()
 
 # Playground
 # x_ds = sim_df.copy()
