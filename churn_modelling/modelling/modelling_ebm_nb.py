@@ -59,10 +59,16 @@ iterations_df = model_ebm.feature_selection(
 model_ebm.visualize_feature_selection(iterations_df)
 
 # Dimension reduction
-feature_set = ast.literal_eval(iterations_df["SELECTED_SET"][20])
-feature_set.append("storno")
-df_ds_train = df_ds_train[feature_set]
-df_test = df_test[feature_set]
+#feature_set = ast.literal_eval(iterations_df["SELECTED_SET"][20])
+fix_feats.extend([
+    "storno",
+    "n_requests_1",
+    "diff_avg_vjnbe_requests_3",
+    "diff_n_requests_3",
+    "other_hsntsn_requests_3",
+])
+df_train = df_train[fix_feats]
+df_test = df_test[fix_feats]
 
 
 ### EBM
@@ -124,9 +130,9 @@ preds = ebm_fit.predict(X_test)
 
 
 ### Evaluation
-acc = accuracy_score(y_true, preds)  # 0.9915
-prec = precision_score(y_true, preds)  # 0.8462 TP/(TP + FP)
-rec = recall_score(y_true, preds)  # 0.2136 TP/(TP + FN)
+acc = accuracy_score(y_true, preds)  # 0.9915 / 0.9905
+prec = precision_score(y_true, preds)  # 0.8462 / 0.7333 TP/(TP + FP)
+rec = recall_score(y_true, preds)  # 0.2136 / 0.1078 TP/(TP + FN)
 confusion_matrix(y_true, preds)
 
 ### Explanations
