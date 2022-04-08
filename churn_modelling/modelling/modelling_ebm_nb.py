@@ -73,24 +73,18 @@ df_test = df_test[fix_feats]
 
 ### EBM
 hp_fix_dict = {
-    "objective": "binary",
-    "max_depth": -1,
-    "n_estimators": 1000,
-    "random_state": 1,
-    "importance_type": "split",
+    "validation_size": 0.1111,
+    "early_stopping_rounds": 30,
+    "early_stopping_tolerance": 1e-4,
+    "max_rounds": 5000,
 }
 hp_tune_dict = {
-    "num_leaves": sp_randint(6, 50),
-    "min_child_weight": [1e-5, 1e-2, 1e-1, 1, 1e1, 1e4],
-    "min_child_samples": sp_randint(100, 500),
-    "subsample": sp_uniform(loc=0.4, scale=0.6),
-    "colsample_bytree": sp_uniform(loc=0.6, scale=0.4),
-    "reg_alpha": [0, 1, 5, 10, 100],
-    "reg_lambda": [0, 1, 5, 10, 100],
-}
-hp_eval_dict = {
-    "eval_metric": "logloss",
-    "callbacks": [lgb.log_evaluation(100), lgb.early_stopping(30)],
+    "interactions": sp_randint(5, 10),
+    "outer_bags": sp_randint(20, 30),
+    "inner_bags": sp_randint(20, 30),
+    "learning_rate": sp_uniform(loc=0.009, scale=0.006),
+    "min_samples_leaf": sp_randint(2, 10),
+    "max_leaves": sp_randint(2, 5),
 }
 rscv_params = {
     "n_iter": 100,
@@ -102,20 +96,28 @@ rscv_params = {
 
 seed = 12
 
-ebm = ExplainableBoostingClassifier(
-    interactions=10,
-    outer_bags=25, # default=8
-    inner_bags=25, # default=0
-    learning_rate=0.01,
-    validation_size=0.1111,
-    early_stopping_rounds=30,
-    early_stopping_tolerance=1e-4,
-    max_rounds=5000,
-    min_samples_leaf=2,
-    max_leaves=3,
-    n_jobs=-1,
-    random_state=seed,
+ebm = model_ebm.fit_ebm(
+    df_train=df_train,
+    hp_fix_dict=hp_fix_dict,
+    hp_tune_dict=hp_tune_dict,
+    rscv_params=rscv_params,
+    seed=seed,
 )
+
+# ebm = ExplainableBoostingClassifier(
+#     interactions=10,
+#     outer_bags=25, # default=8
+#     inner_bags=25, # default=0
+#     learning_rate=0.01,
+#     validation_size=0.1111,
+#     early_stopping_rounds=30,
+#     early_stopping_tolerance=1e-4,
+#     max_rounds=5000,
+#     min_samples_leaf=2,
+#     max_leaves=3,
+#     n_jobs=-1,
+#     random_state=seed,
+# )
 
 y_train = df_train["storno"]
 X_train = df_train.drop(["storno"], axis=1)

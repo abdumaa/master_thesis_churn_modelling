@@ -46,15 +46,25 @@ df_train, df_val, df_test = model_pl.create_train_val_test()
 # Downsample Training Set
 df_ds_train = model_pl.create_sampling(df_to_sample=df_train, frac=0.1)
 
+# Split features into quotation and fix_features
+quot_feats, fix_feats = model_pl.split_quotation_fix_features()
+
 # MRMR
 iterations_df = model_pl.feature_selection(df_to_dimreduce=df_train, cv=5)
 model_pl.visualize_feature_selection(iterations_df)
 
 # Dimension reduction
-feature_set = ast.literal_eval(iterations_df["SELECTED_SET"][20])
-feature_set.append("storno")
-df_ds_train = df_ds_train[feature_set]
-df_test = df_test[feature_set]
+#feature_set = ast.literal_eval(iterations_df["SELECTED_SET"][20])
+fix_feats.extend([
+    "storno",
+    #"n_requests_1",
+    #"diff_avg_vjnbe_requests_3",
+    #"diff_n_requests_3",
+    #"other_hsntsn_requests_3",
+])
+df_train = df_train[fix_feats]
+df_val = df_val[fix_feats]
+df_test = df_test[fix_feats]
 
 
 ### lgbm
@@ -107,8 +117,8 @@ X_test = df_test.drop(["storno"], axis=1)
 
 preds, preds_proba = model_pl.predict(
     X=X_test,
-    predict_from_latest_fit=True,
-    lgbm_fit=None
+    predict_from_latest_fit=False,
+    lgbm_fit=lgbm_fit,
 )
 
 pred6 = [0 if p < 0.6 else 1 for p in preds_proba]  # (pred_list >= 0.5).astype("int")
@@ -129,8 +139,9 @@ lgbm_fit = load(latest_file)
 
 
 # visualizations
-
-PartialDependenceDisplay.from_estimator(lgbm_fit, X_test, ["avg_n_requests_1"], target=y_true)
+y_train = df_train["storno"]
+X_train = df_train.drop(["storno"], axis=1)
+PartialDependenceDisplay.from_estimator(lgbm_fit, X_train, ["years_driving_license"], target=y_true)
 
 # skplt.metrics.plot_roc_curve(y_test, preds)
 # plt.show()
