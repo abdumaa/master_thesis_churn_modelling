@@ -53,9 +53,20 @@ class LGBM:
                 df_to_sample=self.df, y=self.target, sampling=sampling, frac=frac
             )
 
-    def feature_selection(self, df_to_dimreduce=None, cv=5, sample=False):
+    def split_quotation_fix_features(self):
+        """Return two lists containing quotation & fix features."""
+        full_features = self.df.columns.to_list()
+        full_features.remove(self.target)
+        quotation_features = [i for i in full_features if "requests" in i]
+        fix_features = [i for i in full_features if "requests" not in i]
+        return quotation_features, fix_features
+
+    def feature_selection(self, df_to_dimreduce=None, variable_names=None, cv=5, sample=False):
         """Create feature_selection_df using MRMR-Scorer."""
         if df_to_dimreduce is not None:
+            if variable_names is not None:
+                variable_names.append(self.target)
+                df_to_dimreduce = df_to_dimreduce[variable_names]
             return mrmr(
                 df_to_dimreduce=df_to_dimreduce,
                 target=self.target,
@@ -63,8 +74,11 @@ class LGBM:
                 sample=sample,
             )
         else:
+            if variable_names is not None:
+                variable_names.append(self.target)
+                df_to_dimreduce = self.df[variable_names]
             return mrmr(
-                df_to_dimreduce=self.df, target=self.target, cv=cv, sample=sample
+                df_to_dimreduce=df_to_dimreduce, target=self.target, cv=cv, sample=sample
             )
 
     def visualize_feature_selection(self, feature_selection_df):

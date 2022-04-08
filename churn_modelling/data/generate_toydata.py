@@ -79,7 +79,7 @@ def generate_toydata(p_churn=0.01, len=100000, to_csv=True):
     sim_df["diff_n_requests_3"] = (
         round(sim_df["n_requests_3"] / 3, 2) - sim_df["avg_n_requests_3"]
     )
-    sim_df["diff_vjnbe_avg_1"] = np.where(
+    sim_df["diff_avg_vjnbe_requests_1"] = np.where(
         sim_df["n_requests_1"] != 0,
         np.where(
             sim_df["storno"] == 1,
@@ -88,7 +88,7 @@ def generate_toydata(p_churn=0.01, len=100000, to_csv=True):
         ),
         0,
     )
-    sim_df["diff_vjnbe_avg_2"] = np.where(
+    sim_df["diff_avg_vjnbe_requests_2"] = np.where(
         sim_df["n_requests_2"] != 0,
         np.where(
             sim_df["storno"] == 1,
@@ -97,7 +97,7 @@ def generate_toydata(p_churn=0.01, len=100000, to_csv=True):
         ),
         0,
     )
-    sim_df["diff_vjnbe_avg_3"] = np.where(
+    sim_df["diff_avg_vjnbe_requests_3"] = np.where(
         sim_df["n_requests_3"] != 0,
         np.where(
             sim_df["storno"] == 1,
@@ -106,102 +106,102 @@ def generate_toydata(p_churn=0.01, len=100000, to_csv=True):
         ),
         0,
     )
-    storno_0_other_hsntsn_in_requests_1 = np.random.normal(
+    storno_0_other_hsntsn_requests_1 = np.random.normal(
         0.2, 0.3, len
     )
-    storno_1_other_hsntsn_in_requests_1 = np.random.normal(
+    storno_1_other_hsntsn_requests_1 = np.random.normal(
         0.3, 0.5, len
     )
-    storno_0_other_hsntsn_in_requests_1 = np.where(
-        storno_0_other_hsntsn_in_requests_1 >= 0,
+    storno_0_other_hsntsn_requests_1 = np.where(
+        storno_0_other_hsntsn_requests_1 >= 0,
         np.where(
-            storno_0_other_hsntsn_in_requests_1 <= 1,
-            storno_0_other_hsntsn_in_requests_1,
+            storno_0_other_hsntsn_requests_1 <= 1,
+            storno_0_other_hsntsn_requests_1,
             1
         ),
         0
     )
-    storno_1_other_hsntsn_in_requests_1 = np.where(
-        storno_1_other_hsntsn_in_requests_1 >= 0,
+    storno_1_other_hsntsn_requests_1 = np.where(
+        storno_1_other_hsntsn_requests_1 >= 0,
         np.where(
-            storno_1_other_hsntsn_in_requests_1 <= 1,
-            storno_1_other_hsntsn_in_requests_1,
+            storno_1_other_hsntsn_requests_1 <= 1,
+            storno_1_other_hsntsn_requests_1,
             1
         ),
         0
     )
-    sim_df["other_hsntsn_in_requests_1"] = np.where(
+    sim_df["other_hsntsn_requests_1"] = np.where(
         sim_df["n_requests_1"] != 0,
         np.where(
             sim_df["storno"] == 1,
-            storno_1_other_hsntsn_in_requests_1,
-            storno_0_other_hsntsn_in_requests_1,
+            storno_1_other_hsntsn_requests_1,
+            storno_0_other_hsntsn_requests_1,
         ),
         0,
     )
-    storno_0_other_hsntsn_in_requests_2 = np.random.normal(
+    storno_0_other_hsntsn_requests_2 = np.random.normal(
         0.2, 0.3, len
     )
-    storno_1_other_hsntsn_in_requests_2 = np.random.normal(
+    storno_1_other_hsntsn_requests_2 = np.random.normal(
         0.3, 0.5, len
     )
-    storno_0_other_hsntsn_in_requests_2 = np.where(
-        storno_0_other_hsntsn_in_requests_2 >= 0,
+    storno_0_other_hsntsn_requests_2 = np.where(
+        storno_0_other_hsntsn_requests_2 >= 0,
         np.where(
-            storno_0_other_hsntsn_in_requests_2 <= 1,
-            storno_0_other_hsntsn_in_requests_2,
+            storno_0_other_hsntsn_requests_2 <= 1,
+            storno_0_other_hsntsn_requests_2,
             1
         ),
         0
     )
-    storno_1_other_hsntsn_in_requests_2 = np.where(
-        storno_1_other_hsntsn_in_requests_2 >= 0,
+    storno_1_other_hsntsn_requests_2 = np.where(
+        storno_1_other_hsntsn_requests_2 >= 0,
         np.where(
-            storno_1_other_hsntsn_in_requests_2 <= 1,
-            storno_1_other_hsntsn_in_requests_2,
+            storno_1_other_hsntsn_requests_2 <= 1,
+            storno_1_other_hsntsn_requests_2,
             1
         ),
         0
     )
-    sim_df["other_hsntsn_in_requests_2"] = np.where(
+    sim_df["other_hsntsn_requests_2"] = np.where(
         sim_df["n_requests_2"] != 0,
         np.where(
             sim_df["storno"] == 1,
-            storno_1_other_hsntsn_in_requests_2,
-            storno_0_other_hsntsn_in_requests_2,
+            storno_1_other_hsntsn_requests_2,
+            storno_0_other_hsntsn_requests_2,
         ),
         0,
     )
-    storno_0_other_hsntsn_in_requests_3 = np.random.normal(
+    storno_0_other_hsntsn_requests_3 = np.random.normal(
         0.2, 0.3, len
     )
-    storno_1_other_hsntsn_in_requests_3 = np.random.normal(
+    storno_1_other_hsntsn_requests_3 = np.random.normal(
         0.3, 0.5, len
     )
-    storno_0_other_hsntsn_in_requests_3 = np.where(
-        storno_0_other_hsntsn_in_requests_3 >= 0,
+    storno_0_other_hsntsn_requests_3 = np.where(
+        storno_0_other_hsntsn_requests_3 >= 0,
         np.where(
-            storno_0_other_hsntsn_in_requests_3 <= 1,
-            storno_0_other_hsntsn_in_requests_3,
+            storno_0_other_hsntsn_requests_3 <= 1,
+            storno_0_other_hsntsn_requests_3,
             1
         ),
         0
     )
-    storno_1_other_hsntsn_in_requests_3 = np.where(
-        storno_1_other_hsntsn_in_requests_3 >= 0,
+    storno_1_other_hsntsn_requests_3 = np.where(
+        storno_1_other_hsntsn_requests_3 >= 0,
         np.where(
-            storno_1_other_hsntsn_in_requests_3 <= 1,
-            storno_1_other_hsntsn_in_requests_3,
+            storno_1_other_hsntsn_requests_3 <= 1,
+            storno_1_other_hsntsn_requests_3,
             1
         ),
         0
     )
-    sim_df["other_hsntsn_in_requests_3"] = np.where(
+    sim_df["other_hsntsn_requests_3"] = np.where(
         sim_df["n_requests_3"] != 0,
         np.where(
             sim_df["storno"] == 1,
-            storno_1_other_hsntsn_in_requests_3,
-            storno_0_other_hsntsn_in_requests_3,
+            storno_1_other_hsntsn_requests_3,
+            storno_0_other_hsntsn_requests_3,
         ),
         0,
     )
@@ -306,6 +306,18 @@ def generate_toydata(p_churn=0.01, len=100000, to_csv=True):
         sim_df["age_contract_holder"] - base_age >= 0,
         sim_df["age_contract_holder"] - base_age,
         0
+    )
+
+    # Drop helper columns
+    sim_df = sim_df.drop(
+        [
+            "avg_n_requests_1",
+            "avg_n_requests_2",
+            "avg_n_requests_3",
+            "n_requests_6",
+            "n_requests_12",
+        ],
+        axis=1
     )
 
     if to_csv:
