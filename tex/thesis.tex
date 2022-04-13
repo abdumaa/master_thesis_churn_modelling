@@ -24,6 +24,7 @@
 \usepackage{textcomp}
 \usepackage{diagbox}
 \usepackage{caption}
+\usepackage{subcaption}
 \usepackage{algpseudocode}
 \usepackage{algorithm}
 \DeclareCaptionType{equ}[][]
@@ -212,15 +213,20 @@ Note that for each group we generate multiple features with different values for
 
 \subsection{Literature Review} \par
 
-There is a wide range of literature covering supervised classification techniques and their usage for customer churn predicition. Verbeke et al. \cite{verbekechurn} studies the literature on empirical churn modelling in static settings using cross-sections of data. It provides an extensive benchmark of classification methods and machine learning models applied to different data sets. \\
-Other works have a different approach in modelling customer churn. Van den Poel et al. \cite{vandenpoel} for example models the time to churn using survival analysis techniques. This allows flexible estimations for the conditional probability of customer $i$ churning in the next $s$ periods of time, where the probability can be calculated for different values of $s$ by the model structure itself. Given the fact that with survival analysis, conditioning on multiple time dependent variables is not possible or not well studied yet, we will focus on modelling churn probabilities in the static setting. \\
+There is a wide range of literature covering supervised classification techniques and their usage for customer churn prediction. Verbeke et al. \cite{verbekechurn} provides an overview table on the literature dealing with churn modelling in static settings using cross-sections of data. It provides an extensive benchmark of classification methods and machine learning models applied to different data sets. \\
+Some works have a different approach in modelling customer churn. Van den Poel et al. \cite{vandenpoel} for example models the time to churn using survival analysis techniques. This allows flexible estimations for the conditional probability of customer $i$ churning in the next $s$ periods of time, where the probability can be calculated for different values of $s$ by the model structure itself. Given the fact that with survival analysis, conditioning on multiple time dependent variables is not possible or not well studied yet, we will focus on modelling churn probabilities in the static setting. \\
 The popularity of (deep) neural networks has risen enormously in the last two decades. Its promising accuracy in computer vision, natural language processing and sequential data in general are the reasons for its broad coverage in research. It has also found its way to modelling customer churn, as in \cite{martins}, \cite{tan2018}, \cite{wangperawong}, \cite{zaratiegui}, \cite{zhou} and \cite{mena}. All cited papers rely on the fact that customer data can be used as sequential data with time varying features. Therefore model architectures like convolutional neural networks (CNN) and long short-term memory networks (LSTM) come into play. We however focus on classification techniques which do not assume dependencies in the data points, given the data that we have available. \\
 The different data preparation, preprocessing and feature engineering approaches for churn modelling are also extensively studied. \cite{coussement} for example studies the data preparation approach for modelling churn probabilities in the telecommunication industry. They suggest that an appropriate selection and engineering of features is essential to guarantee robust results and high accuracy. We apply their suggestion to some of our features, which however differ due to the different setting. \\
 Regarding preprocessing, Gattermann-Itschert et al. \cite{multiplets} underline the importance of multi-slicing. This technique essantially uses multiple time-slices $T$ in the past to train the underlying models. They find out that this technique results in higher accuracy and robustness, which also holds true for our application. \\
 As already stated, class imbalance naturally occurs in most churn prediction applications due to the fact that churners are less frequent than non-churners. This problematic increases in a contract-setting, where there are only a few events which allow for an earlier termination than the due date. Weiss et al. \cite{mining_rarity} provides an overview on multiple techniques to handle class-imbalance. It espacially highlights the effectiveness of sampling and cost-sensitve learning which prove to be the best techniques in our application as well. \\
 Zhu et al. \cite{zhu} offers a useful guideline of sampling methods in the context of churn prediction. It compares different sampling techniques in their effectiveness and multiple evaluation metrics. Burez et al. \cite{burez} extensively underlines the importance of using appropriate evaluation metrics in a churn prediciton context. This not only increases the success of customer churn prediction models in real-life settings. It also provides trustworthy metrics in order to make models more comparable. \\
-It is important to note that in the applications predictive analytics, two different evaluating approaches exist. Out-of-sample evaluation uses unseen samples from the same period(s) the model was trained on. Out-of-period evaluation tests the model on samples from a more recent period, which was not used for training. While out-of-sample evaluation is more dominant in the literature, Zahavi et al. \cite{zahavi} and Neslin et al. \cite{neslin} emphasize the importance of evaluating the performance of the model on periods beyond the ones it is trained on. \\
+It is important to note that in the applications of predictive analytics, two different evaluation approaches exist. Out-of-sample evaluation uses unseen samples from the same period(s) the model was trained on. Out-of-period evaluation tests the model on samples from a more recent period, which was not used for training. While out-of-sample evaluation is more dominant in the literature, Zahavi et al. \cite{zahavi} and Neslin et al. \cite{neslin} emphasize the importance of evaluating the performance of the model on periods beyond the ones it is trained on. \\
 Out-of-period evaluation is espacially important when there are time varying factors which influence the churn rate. Examples of such factors are demand, supply, competition, inflation and pricing. Espacially in our use case with automobile liability insurance, products of competitors are close substitutes. So any change in the stated factors has high effects on customer behavior. This undermines the relevance of using multiple time slices for training and out-of-period evaluation. \\
+A few research groups have focused on the choice of appropriate explanatory variables in the context of churn prediction. More specifically, there has been work done in the direction of using customer behavior to predict churn probabilities. Khodabandehlou et al. \cite{khodabandehlou} applies multiple variables reflecting the behavior of customers in a grocery store setting. It also compares different models and highlights the importance of including such variables in production as they help ensuring high accuracy. These variables however focus on the buying and returning behavior under different discounts offered. \\
+Calzada-Infante et al. \cite{calzada} examines social-network behavior of customers in the telecommunication-industry and their predicitve power for churn probabilities. The researchers propose a novel tree-based modelling technique called similarity forests, which relies on social network analysis methods. Their work verifies that the behavior of customers, in their case social relationships, has significant predictive power. Zhang et al. \cite{zhang} solely examines one class of behavioral data to predict telecommunication churn predicition, purposely excluding all other relevant variables. It focuses on variables generated with customer service data and also provides evidence for the importance of behavioral data. \\
+Moertini et al. \cite{moertini} conducts research on supplier churn on e-commerce platforms while using quotation data. The hypothesis the researchers proved to bo correct is that the frequency of supplier activities has high predictive power regarding their tendency to churn. They find out that the relationship in this B2C setting is negative, a low frequency of supplier activity goes along with a higher probability of a churn. \\
+However none of the above and to our best knowledge no other papers focus on using quotation data reflecting recent behavior of customers to predict churn probabilities. While \cite{khodabandehlou}, \cite{calzada} and \cite{zhang} all use customer-specific behavioral data, they all use different approaches of refelcting behavior. Also, their approach does not allow for monitoring individual recent changes in the behavior of customers and its impact on the churn probability. This turns out to be crucial for modelling churn using quotation data. In \cite{moertini} the data used is the nearest to our, the researchers however apply it to supplier churn prediction. \\
+The novelty of this work is also reflected in the fact that while evaluating the models, we not only consider evaluation metrics on hold-out sets. We also use modern interpretation approaches and compare their ability to correctly represent relationships of explanatory variables with the target variable. With the latest rising necessaty of interpretable modelling approaches we want to shed light on our modelling approaches to understand the driving forces which lead to high (or low) probability of churn. \\
 
 
 \section{Methods} \par
@@ -383,8 +389,8 @@ With this approach it is ensured that the model learns more about the neighborho
 One drawback of the presented sampling methods is that the sample distribution is being changed. A different starting point is to change the objective loss function which is minimized during the model fitting. Thereby the sample size and the distribution stay the same. In the modified cost function we want to penalize false-negative
 classifications with a higher weight. Reason behind this is to ensure that the event of interest, represented by the minority class, is predicted correctly \cite{cost_sensitive}. \\
 The challange of this approach is to find the appropriate penalty parameters. It is hard to measure the cost of misclassifying an insurance-customer regarding churn-probabilities. The fact that these costs can come from multiple sources which are not easily definable is one part of the reasoning. Therefore we focus on two types of modified loss functions.\\
-One conventional method is to assign simple parameter weights $w0$ and $w1$ to the loss function. By default one might use the inverse of the class frequency as the associated weights. These parameters however can also be optimized during grid search. We call this method the "Simple Weighted Loss Function". The derivation is part of the next subchapter.\\
-The second approach is called "Focal Loss Function" and was originally designed by FAIR (Facebook Artifficial Intelligence Research) for an object detection purpose \cite{focal}. As it also aims to penalize false-negative classifications it is widely used for predicting rare events. Again, the exact structure is shown in the next subchapter and the parameters can be tuned with grid search.\\
+One conventional method is to assign simple parameter weights $w0$ and $w1$ to the loss function. By default one might use the inverse of the class frequency as the associated weights. These parameters however can also be optimized during hyperparameter tuning. We call this method the "Simple Weighted Loss Function". The derivation is part of the next subchapter.\\
+The second approach is called "Focal Loss Function" and was originally designed by FAIR (Facebook Artifficial Intelligence Research) for an object detection purpose \cite{focal}. As it also aims to penalize false-negative classifications it is widely used for predicting rare events. Again, the exact structure of the modified loss-function is shown in the next subchapter and the parameters can be tuned.\\
 
 
 \subsection{Machine Learning Models} \par
@@ -405,6 +411,15 @@ Therefore $f(\cdot)$ is the sigmoid function used on function $g(\cdot)$, where 
 
 \begin{equation} \label{lin_model}
     g(X_{t}) = \beta X_{t} + \epsilon_{t} \\
+\end{equation}
+
+As the classification models output probabilities between 0 and 1 for a churn, a cutoff $\tau$ is needed in order to create assignment to each class. The rule of thumb is to set $\tau = 0.5$, such that probabilities larger than $0.5$ are predicted as churns and the rest as non-churns. We will see that the optimal $\tau$ is application dependent and relies on the evaluation metric which is trying to be maximized. Typically a high $\tau$ ensures, that a high percentage of positive classified samples are in fact positive. A lower $\tau$ however ensures that a higher amount of churners are detected (but with lower precision). \\
+
+\begin{equation} \label{tau}
+    \widehat{C_{t+s}^{class}} = \begin{cases}
+        1,& \widehat{C_{t+s}} \geq \tau \\
+        0,& \widehat{C_{t+s}} < \tau
+    \end{cases}
 \end{equation}
 
 Maximum Likelihood is then used to estimate the vector of parameters $\beta$ of the model. It maximizes the joint probability that the status of the training data contracts are drawn from the Bernoulli distribution stated in (\ref{bern_dist}). For the final model in production, when estimating probabilities for a churn in the next period, $t$ is of course equal across all contracts in $X$. But as already stated, for training the model we use multiple timestamps of the historized data. Therefore the index $t$ is left out for the input matrix $X$ and output vector $C$ while estimating model parameters, avoiding a misleading notation. Still, the status of contract $i$ is determined after $s$ units of time for all contracts. The likelihood function to be maximized is described as follows: \\
@@ -432,8 +447,12 @@ Additionally, as already mentioned in (\ref{Cost-Sensitive Classifiers}), one te
 \end{equation}
 \end{equ}
 
-Here, the penalty term $h(\cdot)$ can either be an L1 or L2 regularization on $\beta$. The additional parameters of $\lambda$, $w_{0}$ and $w_{1}$ are hyperparameters which can be tuned during grid search. Following (whose?) approach, $w_{1}$ and $w_{0}$ can also be set by default to the inverse of their corresponding class frequencies in the training data. \\
-The objective "Focal Loss Function" is set up like this: \\
+Here, the penalty term $h(\cdot)$ can either be an L1 or L2 regularization on $\beta$. The additional parameters of $\lambda$, $w_{0}$ and $w_{1}$ are hyperparameters which can be tuned during hyperparameter search. Following (whose?) approach, $w_{1}$ and $w_{0}$ can also be set by default to the inverse of their corresponding class frequencies in the training data. \\
+To provide further intuition behind the idea of using a weighted loss function we look at the individual loss for different values of $w_{1}$ and $w_{0}$. For $w_{1}>w_{0}$ we reach the desired state of penalizing false-negative classifications more than false-positive ones. To see why this is the case it is best to look at the single log-loss for a positive sample. Positive samples in \ref{loss_fct_wl} can be seen as the insertion of $C^{(i)}=1$ which simplifies the individual loss to $-w_{1}log(\widehat{C^{(i)}})$. The individual loss resulting from positive class individuals for different values of $\widehat{C^{(i)}}$ and $w_{1}$ is summarized by following plot: \\
+\centerline{\includegraphics[height=8cm]{weighted_loss.png}}
+This can be analogously done for negative samples. The individual loss for $C^{(i)}=0$ simplifies to $-w_{0}log(1-\widehat{C^{(i)}})$. We therefore see that for $w_{1}>w_{0}$ the relative penalty for false-negative classifications is higher. \\
+
+Going one step further and introducing one more adjustable parameter to the objective function we arrive at the "Focal Loss Function". It is structured like this: \\
 
 \begin{equ}[!ht]
 \caption{Focal Loss Function}
@@ -442,9 +461,11 @@ The objective "Focal Loss Function" is set up like this: \\
 \end{equation}
 \end{equ}
 
-Again, $\lambda$, $\alpha$ and $\gamma$ are hyperparamaters, which can be optimized during grid search. We use and compare both \ref{loss_fct_wl} and \ref{loss_fct_fl} for our classifiers to get the best out-of-sample performance. \\
-After having found the optimal set of parameters it is time to define the classification cutoff $\tau$ for predicting a churn. The logistic regression model outputs a probability which is between 0 and 1. The rule of thumb is to set $\tau = 0.5$, such that probabilities larger than $0.5$ are predicted as churns and the rest as non-churns. \\
-- Interpretability of Logistic Regression runterschreiben \\
+Again, $\lambda$, $\alpha$ and $\gamma$ are hyperparamaters, which can be optimized during hyperparameter tuning. Note that for $\gamma=0$ (\ref{loss_fct_fl}) becomes a "Simple Weighted Loss Function" with the simple restriction: $w_{1}+w_{0}=1$. So the same intuition for varying weights $w_{1}$ and $w_{0}$ can be applied for $\alpha$ here. Also note that for $\gamma=0$ and $\alpha=0.5$ we are left with the original log-loss function derived in (\ref{logistic_log_MLE}) multiplied by $0.5$. \\
+To understand how $\gamma$ can be used to improve modelling, we again look at the single loss for a positive sample $C^{(i)}=1$. As $\gamma$ affects the loss for positive and negative classifications analogously, the same logic can be applied for $C^{(i)}=0$. Thereby we again plot the loss for different values for $\gamma$ and $\widehat{C^{(i)}}$ and set $\alpha=0.5$. \\
+\centerline{\includegraphics[height=8cm]{focal_loss.png}}
+As illustrated a positive $\gamma$ skews the function in a way that small to medium deviations of $\widehat{C^{(i)}}$ from the true $C^{(i)}$ are not penalized as much as in the normal log-loss function. Strong deviations however are penalized almost as much as in the normal function. This introduces the effect of a higher relative loss for "bad" false classifications. \\
+Both (\ref{loss_fct_wl}) and (\ref{loss_fct_fl}) aim to tackle the issue of having highly imbalanced classes. We use and compare both with different parameters for our classifiers and select the one which performs best on the hold-out set. \\
 
 \subsubsection*{(ii) Tree-based Classifier}
 
@@ -489,8 +510,6 @@ The idea of boosted trees for classification is to have a sequence of dependent 
 \end{algorithmic}
 \end{algorithm}
 
-- Gradient boosted bagged trees noch? \\
-
 The hyperparameter $\lambda$ is called learning rate and set to a small number to learn slowly and to avoid overfitting. It should not be confused with the $\lambda$ of regularization (change notation in regularization?). Also notice, that the loss function defined here is the objective loss function used for gradient boosting and is defined differently than the loss function, when constructing a single tree. We use the same two objective loss functions for Gradient Boosting derived in (\ref{loss_fct_wl}) and (\ref{loss_fct_fl}) and perform hyperparameter optimization to get the best set of hyperparameters belonging to these loss functions. As already stated, this allows us to handle the class imbalance. We leave out the regularization term $h(\cdot)$ in GBT.\\
 To apply the log-loss function in (\ref{loss_fct_wl}) or (\ref{loss_fct_fl}) we need to derive the gradient as well as the hessian of this function. Herewith the lightgbm-package \cite{gbt} aims to improve time-cost as is it takes the second order Taylor Expansion to compute the optimal loss minimizing $\hat{f}_{b}(X)$ in each iteration $b=1,...,B$. These are calculated in the appendix. \\
 The main cost with boosted trees is learning the single trees, and the most time-consuming part in that is to find the best split-points. Therefore we make use of the histogram-based approach of the lightgbm-package in our prediction model which aims to tackle this issue. The so called histogram-based approach is designed to bin the features which creates high efficiency gains during searching for the optimal splits, especially for continuous variables. \\
@@ -502,23 +521,23 @@ There are a lot of hyperparameters which allow to tune the learning structure. T
 \begin{table} \label{hp_lgbm}
     \centering
     \caption{Hyperparameters for lgbm}
-    \begin{tabular}{c|l|l|l|} 
+    \begin{tabular}{c|l|l|}
     \hline
-    \multicolumn{1}{l|}{}                                       & Hyperparameter      & Description                                                                                      & Grid Search Values       \\ 
+    \multicolumn{1}{l|}{}                                       & Hyperparameter                            & Grid Search Values       \\
     \hline
-    \multirow{7}{*}{\begin{sideways} Boosting \end{sideways}}                         & learning rate       & Boosting learning rate $\lambda$                                                                & Shrinking learning rate  \\
-    & n\_estimators       & Number of boosted Trees B              &                          \\
-    & objective           & Objective or objective loss function   & Custom loss function     \\
-    & subsample           & Subsample ratio of training data used  &                          \\
-    & subsample\_freq     & Frequency of usage of subsample        &                          \\
-    & reg\_alpha          & L1 regularization term on weights      &                          \\
-    & reg\_lambda         & L2 regularization term on weights      &                          \\
+    \multirow{7}{*}{\begin{sideways} Boosting \end{sideways}}                         & Boosting learning rate $\lambda$                                                                & Shrinking learning rate  \\
+    & Number of boosted Trees B              &                          \\
+    & Objective or objective loss function   & Custom loss function     \\
+    & Subsample ratio of training data used  &                          \\
+    & Frequency of usage of subsample        &                          \\
+    & L1 regularization term on weights      &                          \\
+    & L2 regularization term on weights      &                          \\
     \hline
-    \multicolumn{1}{l|}{\multirow{5}{*}{\begin{sideways} Single Tree \end{sideways}}} & num\_leaves         & Maximum number of tree leaves          &                          \\
-    \multicolumn{1}{l|}{}                                       & subsample\_for\_bin & Number of samples for constructing bin &                          \\
-    \multicolumn{1}{l|}{}                                       & min\_split\_gain    & Minimum loss reduction for~split       &                          \\
-    \multicolumn{1}{l|}{}                                       & min\_child\_samples & Minimum number of data in new region   &                          \\
-    \multicolumn{1}{l|}{}                                       & colsample\_bytree   & Subsample ratio of columns for tree    &                          \\
+    \multicolumn{1}{l|}{\multirow{5}{*}{\begin{sideways} Single Tree \end{sideways}}} & Maximum number of tree leaves          &                          \\
+    \multicolumn{1}{l|}{}                                       & Number of samples for constructing bin &                          \\
+    \multicolumn{1}{l|}{}                                       & Minimum loss reduction for~split       &                          \\
+    \multicolumn{1}{l|}{}                                       & Minimum number of data in new region   &                          \\
+    \multicolumn{1}{l|}{}                                              & Subsample ratio of columns for tree    &                          \\
     \hline
     \end{tabular}
 \end{table}
@@ -537,6 +556,28 @@ Unfortunetaly there is still a huge gap between standard GAM-models and full com
 There are a number of approaches to detect the best set of feature interactions for our model as in \cite{anova_interaction}, \cite{pdf_interaction}, \cite{guide}, \cite{grove}. These methods however are either computationally inefficient or almost even infeasible with high-dimensional data. Therefore we use the "FAST" approach presented by Lou et al. \cite{ga2m}, which are also available in the EBM-package. \\
 FAST's structure is based on a greedy forward stagewise selection strategy. It can be compared to the MRMR in a way that it starts with an empty set of selected pairs and an unselected set containing all possible feature pairs. In each iteration all possible unselected pairs are used seperately to fit the current objective loss function resulting from the additive model including only the already selected pairs. The pair with the highest loss improvement is selected in that iteration. The iteration stops, when the objective loss function stops improving for any other inclusion of a pair. \\
 If we assume that we have $M$ features in our data the amount of possible pairwise interactions equals $\binom{M}{2} = \frac{M(M-1)}{2}$. As a result, calculating the set of interaction functions and fitting all possible new models in each iteration is very time consuming for large $M$. FAST therefore builds the interaction functions more efficiently by defining optimized quadrants in the space of the two features and taking the mean values of each quadrant. Please refer to \cite{ga2m} for more insights on this procedure. \\
+Like GBT and its python implementation lightgbm, EBM offers hyperparameters to tune. Table 3 lists them and the value spaces used for finding the optimal hyperparameter. \\
+
+\begin{table} \label{hp_lgbm}
+    \centering
+    \caption{Hyperparameters for ebm}
+    \begin{tabular}{l|l|l|}
+    \hline
+    \multicolumn{1}{l|}{}                                       & Hyperparameter                            & Grid Search Values       \\
+    \hline
+    \multirow{2}{*}{Boosting}                         & Boosting learning rate $\lambda$                                                                & Shrinking learning rate  \\
+    & Number of boosting rounds            &                          \\
+    \hline
+    \multicolumn{1}{l|}{\multirow{2}{*}{Single Tree}} & Max number of tree leaves          &                          \\
+    \multicolumn{1}{l|}{}                                       & Min number of samples for new leaf   &                          \\
+    \hline
+    \multicolumn{1}{l|}{\multirow{3}{*}{Other}} & Number of interactions          &                          \\
+    \multicolumn{1}{l|}{}                                       & outer\_bags   &                          \\
+    \multicolumn{1}{l|}{}                                       & inner\_bags   &                          \\
+    \hline
+    \end{tabular}
+\end{table}
+
 Our modelling structure with EBM differs slightly due to the fact that we first need to find the optimal number of interactions. It is therefore summarized as follows:
 
 \vspace{3mm}
@@ -552,7 +593,7 @@ We will split our dataset (stratified split) into a training (80$\%$), validatio
 
 \subsection{Model Evaluation Metrics} \par
 
-To get an unbiased estimate of the generalized performance of our model, it has to be tested on unseen data, which was not part of the training process. In order to espacially ensure time generalizability of our models, we use unseen data (test set) of an additional different timestamp to generate evaluations. \\
+To get an unbiased estimate of the generalized performance of our model, it has to be tested on unseen data, which was not part of the training process. In order to espacially ensure time generalizability of our models, we not only use out-of-sample but also out-of-period unseen data (test set) to generate evaluations. \\
 For the evaluation of classification models there is a huge variety of metrics. As already stated, selecting the correct metric is crucial. Let us first define the possible outcomes of our model with the confusion matrix: \\
 
 \renewcommand{\arraystretch}{2}
@@ -591,10 +632,11 @@ For calculating the AUROC or the AUPRC there are multiple methods. All of them r
 
 \subsection{Interpreting the Models} \par
 
-One of the main tasks of this work is to interpret the structure of our models. More precisely, we want to know how each feauture interacts with the probability of an estimated churn. Espacially the usage of quotation data turns out to have high predicitve power, but we want to check if the assumed interaction is true and how the shape of the interaction in our models really looks like. This question is also answered for other features which turn out to have high predictive importance in our model. \\
-In prediction models in general, one has to make a decision between two questions the modelling approach needs to answer. The first question is what is predicted and the second is why is it predicted. In applications where missclassifications have low consequences or/and the why question does not deliver any benifit the interpretability may be neglected. Therefore e.g. in movie recommender systems (low missclassification costs) or in object detection applications (why is not important) very complex models are used to ensure that the what question is answered correctly. \\
+One of the main tasks of this work is to interpret the structure of our models. More precisely, we want to know how each feauture interacts with the probability of an estimated churn. Espacially the usage of quotation data turns out to have high predicitve power, but we want to check if the assumed relationship is true and how the shape of the relationship in our models really looks like. This question is also answered for other features which turn out to have high predictive importance in our model. \\
+In prediction models in general, one has to make a decision between two questions the modelling approach needs to answer. The first question is what is predicted and the second is why is it predicted. In applications where missclassifications have low consequences or/and the why question does not deliver any benefit the interpretability may be neglected. Therefore e.g. in movie recommender systems (low missclassification costs) or in object detection applications (why is not important) very complex models are used to ensure that the what question is answered correctly. \\
 For many applications however answering the what question correctly is not enough. Espacially econometricians accept a drop in predictive accuracy for a better answer to the why question. That is why in econometric applications the modelling approach relies on simple models such as linear or logistic regression. Thereby, the focus is on testing necessary assumptions and the significance of parameters which make the interpretability of such models reliable. \\
-The modelling approach of this work tries to answer both questions as much as possible. Therefore we do not rely on complex black-box models which only aim to have high predictive accuracy but at the same time are not solely interested on statistical significance of parameters for reliable inference. Therefore we use modern techniques which maximize the utility of jointly answering both questions. As our two models GBT and EBM have different approaches in terms of interpretability we split the interpretation of the models in two parts. Thereby we compare and check if the findings are in line with each other.\\
+The modelling approach of this work tries to answer both questions as much as possible. Therefore we do not rely on complex black-box models which only aim to have high predictive accuracy but at the same time are not solely interested on statistical significance of parameters for reliable inference. Therefore we use modern techniques which maximize the utility of jointly answering both questions. \\
+EBM is interpretable in the functional form of the individual shape functions. Therefore we focus on explanation approaches for our black-box model of GBT. When presenting the results in the next chapter, we check if the findings and interpretations are in line with each other in both models. \\
 
 \subsubsection*{Explaining Gradient Boosted Trees}
 
@@ -639,7 +681,7 @@ Step 2 is done for each variable individually. So for each variable and for ever
 \textit{SHAP}
 
 \vspace{3mm}
-SHAP and shapley values are a local model-agnostic method. SHAP's theoritcal foundation originally lies in the shapley values from Game Theory \cite{shapley}. To understand the approach of SHAP it is necessary to understand the computation of shapley values in a machine learning setting first. That is why the first part of this section is dedicated to an introduction into shapley values. \\
+SHAP is a local model-agnostic method but can also be used to estimate global explanations. SHAP's theoritcal foundation originally lies in the shapley values from Game Theory \cite{shapley}. To understand the approach of SHAP it is necessary to understand the computation of shapley values in a machine learning setting first. That is why the first part of this section is dedicated to an introduction into shapley values. \\
 To link the game theoretical approach to machine learning, a prediction can be explained by assuming that each variable value of the instance is a “player” in a game where the prediction is the "payout". The shapley values then tell us how to fairly distribute the “payout” among the variables. \\
 The goal of shapley values in the machine learning setting is to explain each variable's contribution to the specific outcome. More specifically, a shapley value computes the contributions to the estimated deviation to the mean of the output variable (in our application: $\hat{C_{k}} - \frac{1}{N} \sum_{j=1}^{N} C_{j}$). We will denote $\delta^{(i)}$ as the contribution of variable $i$ to the particular prediction compared to the average value of the outcome variable, or in short the shapley value. \\
 The shapley value is estimated by the average marginal contribution of a variable value accross all possible coalitions with the other explanatory variables. To elaborate what is meant by all possible coalitions we provide an example model consisting of 3 explanatory variables $X^{(1)}$, $X^{(2)}$, $X^{(3)}$. Let us assume that for a given example $i$, outcome $\hat{Y}_{i}=0.4$ is predicted using variable values $X^{(1)}_{i}=10$, $X^{(2)}_{i}=15$ and $X^{(3)}_{i}=5$. The average predicted value for the output variable is say $\bar Y = 0.5$. We further assume, that we want to calculate the shapley value $\delta^{(1)}$ of $X^{(1)}_{i}=10$, which is the average marginal contribution of that variable value to $\hat{Y}_{i}$ having an $0.1$ deviation to its average. To do this we form all possible coalitions with $X^{(1)}$:
@@ -650,16 +692,142 @@ The shapley value is estimated by the average marginal contribution of a variabl
     \item $X^{(2)}_{i}=15$ \& $X^{(3)}_{i}=5$
 \end{itemize}
 
-For each of these coalitions we compute the estimated $\hat{Y}_{i}$ (1) with and (2) without $X^{(1)}_{i}=10$. The difference between (1) and (2) represents the marginal contribution. The shapley value $\delta^{(1)}$ is the average of all marginal contributions. If a feature value is not included in a coalition a feature value is randomly picked from the data to represent the mean of that feature. To have more reliable estimates of $\delta^{(1)}$, sampling and the computation of marginal contributions is repeated multiple times ($M$) and averaged at the end. \\
+For each of these coalitions we compute the estimated $\hat{Y}_{i}$ (1) with and (2) without $X^{(1)}_{i}=10$. The difference between (1) and (2) represents the marginal contribution. The shapley value $\delta^{(1)}$ is the average of all marginal contributions. If a feature value is not included in a coalition a feature value is randomly picked from the training data to represent the mean of that feature. To have more reliable estimates of $\delta^{(1)}$, sampling and the computation of marginal contributions is repeated multiple times ($M$) and averaged at the end. \\
 The computation time of shapley values rises exponentially with the number of features due to the exponential relationship with the number of coalitions. This is a disadvantage of shapley values in general. This creates a tradeoff between accurate predictions of marginal contributions (high $M$) and fast computation time (low $M$). Several methods are being developed at the moment to define the optimal $M$ to maintain low variance in the estimates for $\delta^{(i)}$ and low computation time. \\
 SHAP, developed by Lundberg et al. \cite{shap}, has a slightly different approach in estimating the shapley values. Its innovation lies in the shapley value explanation being represented as an additive feature attribution method, a linear model. Regarding this aspect SHAP and LIME have similarities. The linear model can be specified as: \\
 
-\begin{equation} \label{pdp}
+\begin{equation} \label{shap}
     g(z) = \delta^{(0)} + \sum_{j=1}^{M} \delta^{(j)}z^{(j)} \\
 \end{equation}
 
-where $z\in \{0,1\}^{M}$ is a vector defining the coalition form, $M$ is the maximum coalition size and $\delta^{(j)}$ is the shapley value of feature $j$. The vector $z$ therefore serves as a collection of explanatory variables in the linear model and defines of feature $j$ is present in the coalition or not. So if we take the example from above, a vector $z=[1,0,1]$ would represent the coalition of $X^{(1)}_{i}=10$ and $X^{(3)}_{i}=5$. The shapley values are the coefficients of the model which are typically estimated by kernel methods (ausführen?). \\
+where $z\in \{0,1\}^{M}$ is a vector defining the coalition form, $M$ is the maximum coalition size and $\delta^{(j)}$ is the shapley value of feature $j$. The vector $z$ therefore serves as a collection of explanatory variables in the linear model and defines if feature $j$ is present in the coalition or not. So if we take the example from above, a vector $z=[1,0,1]$ would represent the coalition of $X^{(1)}_{i}=10$ and $X^{(3)}_{i}=5$. $g(z)$ would represent the model output for $X^{(2)}_{i}$ being drawn from the training data. \\
+Similarly to LIME, in the first step a synthetic dataset for the instance of interest is computed using different vectors $z$. The dataset then consists of the coalition vectors and their corresponding model estimates $g(z)$. Again, as we aim to minimize the variance of the shapley value estimates, for each coalition vector we sample $M$ times (unless $z$ is a vector of 1s). With this new dataset we try to fit the simple linear model in (\ref{shap}). The shapley values are the coefficients of the model which are typically estimated by kernel methods (ausführen?). \\
+The computation of SHAP can be summarized by this pseudo code: \\
 
+\begin{algorithm}
+\caption{SHAP-Algortihm}\label{alg:shap}
+\begin{algorithmic}
+    \State Select data point $X_{i}$ and corresponding prediction $\hat{C_{i}}$ of interest
+    \State Compute all $K = 2^k$ coalition vectors and store in coalition matrix $Z$
+    \State $synth\_df \gets []$ create empty mask for synthetic data set
+    \For{z in Z.columns}
+        \If {$z\neq [1]^k$}
+            \For{m in M}
+                \State Sample for features not in coalition
+                \State Compute corresponding model prediction $\hat{C}$
+                \State synth\_df.append($\hat{C}$, $z$)
+            \EndFor
+        \Else
+            \State synth\_df.append($\hat{C_{i}}$, $z$)
+        \EndIf
+    \EndFor
+    \State Fit linear model on synth\_df
+    \State Explain prediction by interpreting the coefficients
+\end{algorithmic}
+\end{algorithm}
+
+The big advantage of SHAP over the normal computation of shapley values is the ability to efficiently compute the shapley values estimates for all features at once. Also, with this simplified estimation it is possible to go from local to global interpretations. We will shortly describe two methods which can be used to illustrate global effects of features. \\
+The first method is named SHAP feature importance and is fairly easy to compute. It neglects the direction in which a variable affects the model output, however it is a powerful way of measuring average absolute effects of the features. This is essantially what is performed to get the desired SHAP feature importance, as we average over the absolte shapley values per feature across the data: \\
+
+\begin{equation} \label{shap_importance}
+    I_{SHAP}^{(j)} = \frac{1}{N} \sum_{i=1}^{N} \mid \delta^{(j)}_{i} \mid \\
+\end{equation}
+
+The second method does not rely on any further computation and simply visualizes the shapley values for all features and for every instance. It is therefore named SHAP summary plot. Eventhough there is no new metric behind its representation of global explanation, the method is still powerful and interpretable. The plot is constructed in a way such that each point represents one shapley value for a feature and an instance. Therefore one axis lists the features whereas the other corresponds to the shapley value. An additional way to make the resulting plot more interpretable is to add a third dimension, representing the feature value, in form of colours. In the results chapter we present this plot and interpret the results. \\
+
+To summarize this chapter, we presented all mathematical and statistical methods used in this work to succesfully model the underlying problem of customer churn. This chapter dealt with all steps of the machine learning pipeline, starting with preprocessing the data, dimension reduction and the methods to handle class imbalance, to the modelling approaches, their evaluation and interpretation methods. We are now well equipt, to apply these methods evaluate and compare them to build the best prediction model. \\
+
+
+\section{Results} \par
+
+We now present the results of our modelling approaches. First we give short insights into the dataset structure after preprocessing. Then we present two baselines for which we aim to improve on. GBT and EBM differ slightly in their modelling structure. Therefore we split the result presentation in two parts and examine them seperately in terms of improvement to the baseline. As this work focuses both on evaluation of the models predictive performance and its interpretability, we compare both GBT and EBM in both areas at the end. \\
+
+\subsection{Preprocessing and Exploratory Data Analysis} \par
+
+We shortly note that the data used to show the modelling results are based on a toydata set. Due to data protection law it is not possible to publish real data from customers. The toydata however is constructed in a way that it includes key features, metrics and relationships of the true data. We exclude the latest period of the resulting data set ($N=110,000$) as an out-of-period data set ($N=10,000$). The other fraction ($N=100,000$) is used for training, validation and out-of-sample testing, where for both GBT and EBM we perform the same split of 80/10/10. The split stratifies for the target variable "churn", so proportions of churners are approximately equal in all three subsets. The entire toydata undergoes the same preprocessing steps described above. \\
+High class imbalance is present just as in the real data, as churners only make up around 1\% of the data. We have 20 variables besides the churn status. 12 of them are generated through the quotation data. Remember that we only keep 4 of them after dimension reduction, representing the best $m$ per quotation variable group. The rest of the variables contain either contract or car related information. How these variables are exactly named and how they are distributed for each churn status $C\in \{0,1\}$ can be observed in the following violin plots: \\
+\centerline{\includegraphics[height=18cm]{violin.png}}
+The key insights that are generated through this plot point at the effectiveness and importance of including quotation data in churn modelling. (1) There are significant differences in the averages and the standard deviations (the distribution in general) in the number of requests generated 1, 2 and 3 months before $t$, when comparing the group of churners with the group which stayed. The relative difference is the highest for $n\_requests\_1$, with an average of $0.96$ for non-churners versus $6.26$ for churners, and a standard deviation of $6.15$ versus $18.32$. Note that the distribution is heavily right skewed, which is represented by the median being $0$ for both groups. This indicates that the majority of customers, independent of the willingness to churn, do not generate requests. \\
+Other key insights include but are not limited to the following: (2) The average (and standard deviation) of $diff\_n\_requests\_1$ with $4.95$ (and $18.54$) for churners is also significantly larger than $0.01$ (and $6.45$) for non-churners. This reflects that the request behavior of customers which are about to churn changes significantly, while non-churners show the same behavior. (3) The average calculated price for churners was significantly higher than the price they are paying in their contract. This is reflected in $diff\_avg\_vjnbe\_requests\_1$ with a difference of $15.00$. For non-churners this difference is also positive but only around $20\%$ as high. (4) A proportion of churners do search for different cars than their current car in their request. This is reflected by the average of $other\_hsntsn\_requests\_1$ for churners being $0.10$. This average is smaller for non-churners with $0.01$. \\
+To conclude, the findings of this exploratory data analysis deliver promising results for the importance of including quotation data for predictive modelling. Next we will present the baselines used in this work.
+
+\subsection{Modelling Baseline} \par
+
+To get an idea on how well a specific model is performing it is useful to have a baseline for the evaluation metrics. Typically the baseline is a simple model/solution. When applying a new solution to solve a business problem, stakeholders are predominantly interested in the generated improvement in terms of profit (or other business KPIs). Thereofore in this context, the status quo is selected as the baseline in most cases. The improvement to the status quo is therefore the driving force if this solution is implemented or not. \\
+In the application of this work, the status quo consists of the no-existence of any mid-contract-period churn prediction model. The fact that quotation data availability and quality was ensured only a few months before this work is the reason for it. As this work underlines the importance and predictive power of quotation data in churn contexts, earlier attempts of modelling this problem were unsuccessful. \\
+Hence, the most naïve baseline we can set for our modelling is that mid-contract-period churns are never predicted. We will name and index this baseline with "B1". Applying this rule to compute the confusion matrix both on the out-of-sample (OOS) and out-of-period (OOP) test data, we are left with following results: \\
+
+\begin{figure}
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{conf_b1_oos.png}
+  \caption{OOS}
+  \label{fig:conf_b1_oos}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{conf_b1_oop.png}
+  \caption{OOP}
+  \label{fig:conf_b1_oop}
+\end{subfigure}
+\caption{Baseline 1 (B1); Status Quo}
+\label{fig:b1}
+\end{figure}
+
+We introduce another baseline which is based on a simple decision rule. This decision rule leads to a prediction of churn if the specific customer showed quotation activity in the past month. Therefore the decision rule implies: \\
+
+\begin{equation} \label{b2}
+    \widehat{C_{t+s}^{class}} = \begin{cases}
+        1,& \text{if } n\_requests_{t - 1, t} > 1 \\
+        0,& \text{if } n\_requests_{t - 1, t} = 0
+    \end{cases}
+\end{equation}
+
+The resulting confusion matrices for OOS and OOP from this baseline (B2) are plotted in Figure X. \\
+
+\begin{figure}
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{conf_b2_oos.png}
+  \caption{OOS}
+  \label{fig:conf_b2_oos}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{conf_b2_oop.png}
+  \caption{OOP}
+  \label{fig:conf_b2_oop}
+\end{subfigure}
+\caption{Baseline 2 (B2); Quotation Activity}
+\label{fig:b2}
+\end{figure}
+
+We further summarize all evaluation matrices for B1 and B2 we are interested in and we improve on with our modelling approach in Table X. \\
+
+\begin{table}
+    \centering
+    \caption{Baseline Evaluations on Unseen Data}
+    \begin{tabular}{|l|cccccc|} 
+    \hline
+              & Accuracy & Precision & Recall &   F1   & AUROC & AUPRC  \\
+    \hline
+    B1 on OOS &  0.9897  &   0.0000  & 0.0000 & 0.0000 & 0.5000 & 0.0103 \\
+    B1 on OOP &  0.9883  &   0.0000  & 0.0000 & 0.0000 & 0.5000 & 0.0117 \\
+    \hline
+    B2 on OOS &  0.9469  &   0.0615  & 0.2913 & 0.1052 & 0.6225 & 0.0252 \\
+    B2 on OOP &  0.9480  &   0.0629  & 0.2479 & 0.1003 & 0.6021 & 0.0244 \\
+    \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Modelling Results} \par
+
+
+
+
+- In conclusion Augmented Intelligence erwähnen? Sagen, dass das Modell nicht alleine entscheiden sollte, sondern nur Entscheidungsunterstützend dient usw.
 \newpage
 
 \thispagestyle{empty}
