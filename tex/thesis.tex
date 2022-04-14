@@ -585,11 +585,14 @@ Our modelling structure with EBM differs slightly due to the fact that we first 
 \textit{(2)} MRMR to select the optimal number of variables \par
 \textit{(3)} Gradient Boosting the resulting GA2M \\
 
-\textit{Parameter and hyperparameter search for the models}
-\vspace{3mm}
+\subsubsection*{(iv) (Hyper)parameter search and Modelling Structure}
 
-We will split our dataset (stratified split) into a training (80$\%$), validation (10$\%$) and test set (10$\%$). All parameters of the models will be constructed using a 3-fold cross-validation on the training set to ensure generalizable training scores and the selection of the best generalizable model. Additionally, the best hyperparameters of each model captured with a randomized implementation of grid-search. The validation set is used for both GBT and EBM to have an early-stoping-criterion evaluated on an out-of-sample data during training.\\
-- Results of grid-search hier? \\
+To avoid overfitting and to ensure reliable and stable results we follow a strict modelling structure for both model approaches. Therefore we split our data set into a training (80$\%$), validation (10$\%$) and test set (10$\%$). Thereby the splits are performed in a stratified manner, ensuring approximately the same proportion of churners in all subsets. We randomly sample 1000 times from the presented set for each hyperparameter presented in the tables above. For each to be tested hyperparameter set we fit the underlying model using a 3-fold cross-validation on the training set to ensure reliable training scores. This totals 3000 fits in total. \\
+The validation set is used for both GBT and EBM to have an early-stoping-criterion evaluated on an unseen data set during fitting. After having fitted the 1000 candidates we pick the set of hyperparamaters which yields the best score metrics. With this set of hyperparameters we fit the underlying model once more, but this time with the entire training and validation set. This model is used, tested on the two test sets and presented as a candidate model for the prediction problem. The graphic X illustrates the data splitting, the hyperparameter search and the end model and its evaluation. \\
+-includegraphics(Hyperparameter search viz mit MS Word) \\
+
+This modelling approach additionally ensures unbiased estimates of the model evaluation metrics, which will be presented in the next chapter. \\
+
 
 \subsection{Model Evaluation Metrics} \par
 
@@ -809,7 +812,7 @@ We further summarize all evaluation matrices for B1 and B2 we are interested in 
 \begin{table}
     \centering
     \caption{Baseline Evaluations on Unseen Data}
-    \begin{tabular}{|l|cccccc|} 
+    \begin{tabular}{|l|cccccc|}
     \hline
               & Accuracy & Precision & Recall &   F1   & AUROC & AUPRC  \\
     \hline
@@ -824,7 +827,11 @@ We further summarize all evaluation matrices for B1 and B2 we are interested in 
 
 \subsection{Modelling Results} \par
 
+While presenting the results we want to emphasize, that for both modelling approaches GBT and EBM we use Graphic X as a structural guide ensuring robust and unbiased models and estimates. During hyperparameter tuning, for each hyperparameter we sample from the presented set presented in table X for GBT and from table Y for EBM. \\
 
+\subsubsection*{Gradient Boosted Trees Results}
+
+\subsubsection*{Explainable Boosting Machine Results}
 
 
 - In conclusion Augmented Intelligence erwähnen? Sagen, dass das Modell nicht alleine entscheiden sollte, sondern nur Entscheidungsunterstützend dient usw.
