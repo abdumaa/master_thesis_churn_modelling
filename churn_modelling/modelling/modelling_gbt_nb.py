@@ -34,37 +34,23 @@ from churn_modelling.preprocessing.mrmr import _correlation_scorer
 
 
 # Load data
-df_temp = pd.read_csv('../data/toydata.csv', index_col=0)
-df = df_temp.copy()
+df_trainval_temp = pd.read_csv('../data/toydata_trainval.csv', index_col=0)
+df_trainval = df_trainval_temp.copy()
 
 # Load LGBM
-model_pl = LGBM(df=df, target="storno", test_size=0.1)
+model_pl = LGBM(df=df_trainval, target="churn", test_size=0.1)
 
 # Train Test Split
-df_train, df_val, df_test = model_pl.create_train_val_test()
+df_train, df_val = model_pl.create_train_val()
 
 # Downsample Training Set
 df_ds_train = model_pl.create_sampling(df_to_sample=df_train, frac=0.1)
 
-# Split features into quotation and fix_features
-quot_feats, fix_feats = model_pl.split_quotation_fix_features()
-
-# MRMR
-iterations_df = model_pl.feature_selection(df_to_dimreduce=df_train, cv=5)
-model_pl.visualize_feature_selection(iterations_df)
-
-# Dimension reduction
-#feature_set = ast.literal_eval(iterations_df["SELECTED_SET"][20])
-fix_feats.extend([
-    "storno",
-    #"n_requests_1",
-    #"diff_avg_vjnbe_requests_3",
-    #"diff_n_requests_3",
-    #"other_hsntsn_requests_3",
-])
-df_train = df_train[fix_feats]
-df_val = df_val[fix_feats]
-df_test = df_test[fix_feats]
+# MRMR and Dimension Reduction
+best_feats = model_pl.get_best_quot_features(df_to_dimreduce=df_train)
+df_train = df_train[best_feats]
+df_val = df_val[best_feats]
+df_test = df_test[best_feats]
 
 
 ### lgbm

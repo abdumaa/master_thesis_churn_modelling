@@ -42,11 +42,11 @@ class EBM:
         """Create (synthetic) up- or down-sampling."""
         if df_to_sample is not None:
             return resample(
-                df_to_sample=df_to_sample, y=self.target, sampling=sampling, frac=frac
+                df_to_sample=df_to_sample, target=self.target, sampling=sampling, frac=frac
             )
         else:
             return resample(
-                df_to_sample=self.df, y=self.target, sampling=sampling, frac=frac
+                df_to_sample=self.df, target=self.target, sampling=sampling, frac=frac
             )
 
     def split_quotation_fix_features(self):
@@ -96,6 +96,42 @@ class EBM:
         feature_set.append(self.target)
 
         return feature_set
+
+    def get_best_quot_features(
+        self,
+        df_to_dimreduce=None,
+        cv=5,
+        sample=False,
+        include_fix_features=True,
+        include_target=True,
+    ):
+        # Split quotation and fix features
+        quot_features, fix_features = self.split_quotation_fix_features()
+
+        # Perform MRMR
+        iterations_df = self.feature_selection(
+            df_to_dimreduce=df_to_dimreduce,
+            variable_names=quot_features,
+            cv=cv,
+            sample=sample,
+        )
+
+        # Get best set of quotation features
+        feature_order = ast.literal_eval(iterations_df["SELECTED_SET"].iloc[-1])
+        quot_feats_groups = []
+        best_feats = []
+        for i in feature_order:
+            if i[:-2] not in quot_feats_groups:
+                quot_feats_groups.append(i[:-2])
+                best_feats.append(i)
+
+        # Append fix features and target if set to true
+        if include_fix_features:
+            best_feats.extend(fix_features)
+        if include_target:
+            best_feats.append(self.target)
+
+        return best_feats
 
     def get_featureset_from_latest_run(self, include_target=True):
         """Select feature set based on set of latest run."""
@@ -177,11 +213,6 @@ class EBM:
                 ebm_fit.best_estimator_,
                 f"/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/ebm_fits/ebm_fit_{time}.joblib",  # find solution for that # noqa
             )
-            if focal_loss is not None:
-                dump(
-                    focal_loss.init_score(y_train),
-                    f"/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/init_scores/ebm_fit_{time}.joblib",  # find solution for that # noqa
-                )
 
         return ebm_fit.best_estimator_
 

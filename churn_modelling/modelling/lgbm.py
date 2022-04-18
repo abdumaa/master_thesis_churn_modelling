@@ -30,27 +30,24 @@ class LGBM:
         self.target = target
         self.test_size = test_size
 
-    def create_train_val_test(self):
+    def create_train_val(self):
         """Split train, val and test."""
-        train, test = split_train_test(
-            df=self.df, target=self.target, test_size=self.test_size
-        )
         train, val = split_train_test(
-            df=train,
+            df=self.df,
             target=self.target,
             test_size=self.test_size / (1 - self.test_size),
         )
-        return train, val, test
+        return train, val
 
     def create_sampling(self, df_to_sample=None, sampling="down", frac="balanced"):
         """Create (synthetic) up- or down-sampling."""
         if df_to_sample is not None:
             return resample(
-                df_to_sample=df_to_sample, y=self.target, sampling=sampling, frac=frac
+                df_to_sample=df_to_sample, target=self.target, sampling=sampling, frac=frac
             )
         else:
             return resample(
-                df_to_sample=self.df, y=self.target, sampling=sampling, frac=frac
+                df_to_sample=self.df, target=self.target, sampling=sampling, frac=frac
             )
 
     def split_quotation_fix_features(self):
@@ -101,6 +98,42 @@ class LGBM:
 
         return feature_set
 
+    def get_best_quot_features(
+        self,
+        df_to_dimreduce=None,
+        cv=5,
+        sample=False,
+        include_fix_features=True,
+        include_target=True,
+    ):
+        # Split quotation and fix features
+        quot_features, fix_features = self.split_quotation_fix_features()
+
+        # Perform MRMR
+        iterations_df = self.feature_selection(
+            df_to_dimreduce=df_to_dimreduce,
+            variable_names=quot_features,
+            cv=cv,
+            sample=sample,
+        )
+
+        # Get best set of quotation features
+        feature_order = ast.literal_eval(iterations_df["SELECTED_SET"].iloc[-1])
+        quot_feats_groups = []
+        best_feats = []
+        for i in feature_order:
+            if i[:-2] not in quot_feats_groups:
+                quot_feats_groups.append(i[:-2])
+                best_feats.append(i)
+
+        # Append fix features and target if set to true
+        if include_fix_features:
+            best_feats.extend(fix_features)
+        if include_target:
+            best_feats.append(self.target)
+
+        return best_feats
+
     def get_featureset_from_latest_run(self, include_target=True):
         """Select feature set based on set of latest run."""
         list_of_fits = glob.glob(
@@ -126,9 +159,11 @@ class LGBM:
         reduce_df_mem=True,
         save_model=True,
         learning_rate_decay=True,
-        focal_loss=None,  # define fl object here
+        custom_loss=None,  # define fl object here
+        cache_model_name=None,
     ):
         """Run through the entire LGBM modelling pipeline."""
+        print("..1: Small preprocessing")
         # Select specific features from df_train for modelling
         if feature_set is not None:
             df_train = df_train[feature_set]
@@ -170,60 +205,69 @@ class LGBM:
                     lgb.reset_parameter(learning_rate=learn_rate_decay)
                 ]
 
-        # Define Focal Loss function and insert into hp_fix_dict and hp_eval_dict
-        if focal_loss is not None:
+        # Define Custom Loss function and insert into hp_fix_dict and hp_eval_dict
+        if custom_loss is not None:
             hp_fix_dict["boost_from_average"] = False
-            hp_fix_dict["objective"] = focal_loss.lgb_obj
-            hp_eval_dict["eval_metric"] = focal_loss.lgb_eval
+            hp_fix_dict["objective"] = custom_loss.lgb_obj
+            hp_eval_dict["eval_metric"] = custom_loss.lgb_eval
             hp_eval_dict["init_score"] = np.full_like(
-                y_train, focal_loss.init_score(y_train), dtype=float
+                y_train, custom_loss.init_score(y_train), dtype=float
             )
 
-        # Call Classifier and HP-Tuner and fit
+        # Call Classifier and HP-Tuner and do HP-Tuning
+        print("..2: Start CV-HP-Tuning")
         lgbm = lgb.LGBMClassifier(boosting_type="gbdt", n_jobs=-1, **hp_fix_dict,)
         lgbm_rscv = RandomizedSearchCV(
             estimator=lgbm, param_distributions=hp_tune_dict, **rscv_params,
         )
         lgbm_fit = lgbm_rscv.fit(X_train, y_train, **hp_eval_dict)
+        print("..3: Finished CV-HP-Tuning")
+        # print(
+        #     "Best score reached: {} with params: {} ".format(
+        #         lgbm_fit.best_score_, lgbm_fit.best_params_
+        #     )
+        # )
 
-        print(
-            "Best score reached: {} with params: {} ".format(
-                lgbm_fit.best_score_, lgbm_fit.best_params_
-            )
+        # Retrain on entire train_set with best HPs
+        print("..4: Refit with best HP-set")
+        lgbm_best = lgb.LGBMClassifier(
+            boosting_type="gbdt",
+            n_jobs=-1,
+            **hp_fix_dict,
+            **lgbm_fit.best_params_,
         )
+        lgbm_best_fit = lgbm_best.fit(X_train, y_train, **hp_eval_dict)
+        print("..5: Finished Refitting")
 
         # Save model
         if save_model:
-            time = datetime.now().strftime("%y%m%d%H%M%S")
+            print("..6: Save best model")
             dump(
-                lgbm_fit.best_estimator_,
-                f"/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_{time}.joblib",  # find solution for that # noqa
+                lgbm_best_fit,
+                f"/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_{cache_model_name}.joblib",  # find solution for that # noqa
             )
-            if focal_loss is not None:
+            if custom_loss is not None:
                 dump(
-                    focal_loss.init_score(y_train),
-                    f"/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/init_scores/lgbm_fit_{time}.joblib",  # find solution for that # noqa
+                    custom_loss.init_score(y_train),
+                    f"/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/init_scores/lgbm_fit_{cache_model_name}.joblib",  # find solution for that # noqa
                 )
 
-        return lgbm_fit.best_estimator_
+        return lgbm_best_fit
 
     def predict(
-        self, X, predict_from_latest_fit=True, lgbm_fit=None, reduce_df_mem=True
+        self, X, predict_from_cached_fit=True, lgbm_fit=None, cache_model_name=None, reduce_df_mem=True
     ):
         """Predict for X Churn probabibilities."""
         # Load model or use passed fit
-        if lgbm_fit is not None and not predict_from_latest_fit:
+        if lgbm_fit is not None and not predict_from_cached_fit:
             lgbm = lgbm_fit
-        elif predict_from_latest_fit and lgbm_fit is None:
-            list_of_fits = glob.glob(
-                "/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/*"  # find solution for that # noqa
+        elif predict_from_cached_fit and lgbm_fit is None:
+            lgbm = load(
+                f"/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_{cache_model_name}.joblib"
             )
-            latest_file = max(list_of_fits, key=os.path.getctime)
-            last_part = latest_file.rsplit("lgbm_fit_", 1)[1]
-            lgbm = load(latest_file)
         else:
             raise ValueError(
-                "Either define only lgbm_fit or set predict_from_latest_fit to True"
+                "Either define only lgbm_fit or set predict_from_cached_fit to True"
             )  # noqa
 
         # Use same features used for fitting loaded model
@@ -239,7 +283,7 @@ class LGBM:
         custom_objective = lgbm.get_params()["objective"] != "binary"
         if custom_objective:  # expected cached init_score to add to preds
             init_score = load(
-                f"/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/init_scores/lgbm_fit_{last_part}"  # find solution for that # noqa
+                f"/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/init_scores/lgbm_fit_{cache_model_name}.joblib"  # find solution for that # noqa
             )
             preds_proba = expit(init_score + lgbm.predict(X))
             preds = (preds_proba >= 0.5).astype("int")
@@ -251,5 +295,5 @@ class LGBM:
         return preds, preds_proba
 
     # def explain(
-    #     self, df, explain_from_latest_fit=True, lgbm_fit=None, reduce_df_mem=True
+    #     self, df, explain_from_cached_fit=True, lgbm_fit=None, reduce_df_mem=True
     # ):

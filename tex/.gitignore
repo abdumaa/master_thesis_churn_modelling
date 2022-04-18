@@ -19,3 +19,4 @@ vcell.tex
 *.bbl
 *.blg
 *.synctex.gz
+*.joblib

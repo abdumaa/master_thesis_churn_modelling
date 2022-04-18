@@ -35,17 +35,17 @@ from churn_modelling.utils.mem_usage import reduce_mem_usage
 from churn_modelling.preprocessing.mrmr import _correlation_scorer
 
 # Load data
-df_temp = pd.read_csv('../data/toydata.csv', index_col=0)
+df_temp = pd.read_csv('../data/toydata_trainval.csv', index_col=0)
 df = df_temp.copy()
 
 # Load EBM
-model_ebm = EBM(df=df, target="storno", test_size=0.1)
+model_ebm = EBM(df=df, target="churn", test_size=0.1)
 
 # Train Test Split
 df_train, df_test = model_ebm.create_train_test()
 
 # Downsample Training Set
-df_ds_train = model_ebm.create_sampling(df_to_sample=df_train, frac=0.1)
+X_us, y_us = model_ebm.create_sampling(df_to_sample=df, sampling="smote", frac="balanced")
 
 # Split features into quotation and fix_features
 quot_feats, fix_feats = model_ebm.split_quotation_fix_features()

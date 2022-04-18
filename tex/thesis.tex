@@ -589,15 +589,14 @@ Our modelling structure with EBM differs slightly due to the fact that we first 
 
 To avoid overfitting and to ensure reliable and stable results we follow a strict modelling structure for both model approaches. Therefore we split our data set into a training (80$\%$), validation (10$\%$) and test set (10$\%$). Thereby the splits are performed in a stratified manner, ensuring approximately the same proportion of churners in all subsets. We randomly sample 1000 times from the presented set for each hyperparameter presented in the tables above. For each to be tested hyperparameter set we fit the underlying model using a 3-fold cross-validation on the training set to ensure reliable training scores. This totals 3000 fits in total. \\
 The validation set is used for both GBT and EBM to have an early-stoping-criterion evaluated on an unseen data set during fitting. After having fitted the 1000 candidates we pick the set of hyperparamaters which yields the best score metrics. With this set of hyperparameters we fit the underlying model once more, but this time with the entire training and validation set. This model is used, tested on the two test sets and presented as a candidate model for the prediction problem. The graphic X illustrates the data splitting, the hyperparameter search and the end model and its evaluation. \\
--includegraphics(Hyperparameter search viz mit MS Word) \\
-
+\centerline{\includegraphics[height=9cm]{fitting_tuning_viz.png}}
 This modelling approach additionally ensures unbiased estimates of the model evaluation metrics, which will be presented in the next chapter. \\
 
 
 \subsection{Model Evaluation Metrics} \par
 
 To get an unbiased estimate of the generalized performance of our model, it has to be tested on unseen data, which was not part of the training process. In order to espacially ensure time generalizability of our models, we not only use out-of-sample but also out-of-period unseen data (test set) to generate evaluations. \\
-For the evaluation of classification models there is a huge variety of metrics. As already stated, selecting the correct metric is crucial. Let us first define the possible outcomes of our model with the confusion matrix: \\
+For the evaluation of classification models there is a large variety of metrics. As already stated, selecting the correct metric is crucial. Let us first define the possible outcomes of our model with the confusion matrix: \\
 
 \renewcommand{\arraystretch}{2}
 
