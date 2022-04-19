@@ -20,3 +20,6 @@ vcell.tex
 *.blg
 *.synctex.gz
 *.joblib
+/churn_modelling/modelling/init_scores/*.joblib
+/churn_modelling/modelling/lgbm_fits/*.joblib
+/churn_modelling/modelling/ebm_fits/*.joblib

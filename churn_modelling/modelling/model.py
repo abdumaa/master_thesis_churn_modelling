@@ -23,35 +23,6 @@ from scipy.stats import uniform as sp_uniform
 def create_fits_and_predictions(sampling_dict, cl_alpha=None, cl_gamma=None, seed=123, feature_set_from_last_fits=False):
     """Create Fits for different sampling methods with LGBMClassifier."""
 
-    # LGBM parameter dictionaries
-    hp_fix_dict = {
-        "objective": "binary",
-        "max_depth": -1,
-        "n_estimators": 1000,
-        "random_state": seed,
-        "importance_type": "split",
-    }
-    hp_tune_dict = {
-        "num_leaves": sp_randint(6, 50),
-        "min_child_weight": [1e-5, 1e-2, 1e-1, 1, 1e1, 1e4],
-        "min_child_samples": sp_randint(100, 500),
-        "subsample": sp_uniform(loc=0.4, scale=0.6),
-        "colsample_bytree": sp_uniform(loc=0.6, scale=0.4),
-        "reg_alpha": [0, 1, 5, 10, 100],
-        "reg_lambda": [0, 1, 5, 10, 100],
-    }
-    hp_eval_dict = {
-        "eval_metric": "logloss",
-        "callbacks": [lgb.log_evaluation(100), lgb.early_stopping(30)],
-    }
-    rscv_params = {
-        "n_iter": 10,
-        "random_state": seed,
-        "n_jobs": -1,
-        "cv": 3,
-        "verbose": 100,
-    }
-
     # Load raw flatfiles
     df = pd.read_csv('../data/toydata_trainval.csv', index_col=0)
     df_oos = pd.read_csv('../data/toydata_oos.csv', index_col=0)
@@ -108,11 +79,40 @@ def create_fits_and_predictions(sampling_dict, cl_alpha=None, cl_gamma=None, see
                 df_train_dr = df_train_sampled[best_feats]
                 df_val_dr = df_val[best_feats]
 
-            # Fit models
+            ### Fit models ###
+            # LGBM hyperparameter dictionaries
+            hp_fix_dict = {
+                "objective": "binary",
+                "max_depth": -1,
+                "n_estimators": 1000,
+                "random_state": seed,
+                "importance_type": "split",
+            }
+            hp_tune_dict = {
+                "num_leaves": sp_randint(6, 50),
+                "min_child_weight": [1e-5, 1e-2, 1e-1, 1, 1e1, 1e4],
+                "min_child_samples": sp_randint(100, 500),
+                "subsample": sp_uniform(loc=0.4, scale=0.6),
+                "colsample_bytree": sp_uniform(loc=0.6, scale=0.4),
+                "reg_alpha": [0, 1, 5, 10, 100],
+                "reg_lambda": [0, 1, 5, 10, 100],
+            }
+            hp_eval_dict = {
+                "eval_metric": "logloss",
+                "callbacks": [lgb.log_evaluation(100), lgb.early_stopping(30)],
+            }
+            rscv_params = {
+                "n_iter": 100,
+                "random_state": seed,
+                "n_jobs": -1,
+                "cv": 3,
+                "verbose": 100,
+            }
             if cl_alpha is None and cl_gamma is None:
                 custom_loss = None
-            if cl_gamma is None:
-                custom_loss = WeightedLoss(alpha=cl_alpha)
+            elif cl_gamma is None and cl_alpha is not None:
+                custom_loss = None
+                hp_fix_dict["scale_pos_weight"] = (cl_alpha / (1 - cl_alpha)) # same as: custom_loss = WeightedLoss(alpha=cl_alpha)
             else:
                 custom_loss = FocalLoss(alpha=cl_alpha, gamma=cl_gamma)
             cache_model_name = f"gbt_{sampling_method}_{dr_method}_a{cl_alpha}_g{cl_gamma}"
@@ -200,9 +200,9 @@ sampling_dict = {
     'dr_method': ['no_quot', 'best_quot'],
 }
 
-alpha = [None, 0.6, 0.7, 0.8]
-gamma = [None, 0.2, 0.5]
-seed = 15
+alpha = [0.6, 0.7, 0.8]
+gamma = [None]
+seed = 16
 for g in gamma:
     for a in alpha:
         if a is None and g is None:

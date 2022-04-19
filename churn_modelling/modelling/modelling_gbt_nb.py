@@ -36,6 +36,7 @@ from churn_modelling.preprocessing.mrmr import _correlation_scorer
 # Load data
 df_trainval_temp = pd.read_csv('../data/toydata_trainval.csv', index_col=0)
 df_trainval = df_trainval_temp.copy()
+df_test = pd.read_csv('../data/toydata_oos.csv', index_col=0)
 
 # Load LGBM
 model_pl = LGBM(df=df_trainval, target="churn", test_size=0.1)
@@ -50,17 +51,17 @@ df_ds_train = model_pl.create_sampling(df_to_sample=df_train, frac=0.1)
 best_feats = model_pl.get_best_quot_features(df_to_dimreduce=df_train)
 df_train = df_train[best_feats]
 df_val = df_val[best_feats]
-df_test = df_test[best_feats]
 
 
 ### lgbm
-
+alpha = 0.55
 hp_fix_dict = {
     "objective": "binary",
     "max_depth": -1,
     "n_estimators": 1000,
     "random_state": 1,
     "importance_type": "split",
+    "scale_pos_weight": ballanced_ratio,
 }
 hp_tune_dict = {
     "num_leaves": sp_randint(6, 50),
@@ -76,7 +77,7 @@ hp_eval_dict = {
     "callbacks": [lgb.log_evaluation(100), lgb.early_stopping(30)],
 }
 rscv_params = {
-    "n_iter": 100,
+    "n_iter": 10,
     "random_state": 43,
     "n_jobs": -1,
     "cv": 3,
@@ -94,17 +95,19 @@ lgbm_fit = model_pl.fit_lgbm(
     reduce_df_mem=True,
     save_model=True,
     learning_rate_decay=True,
-    focal_loss=None,  # FocalLoss(alpha=0.6, gamma=2)
+    custom_loss=None,  # FocalLoss(alpha=0.6, gamma=2)
+    cache_model_name="TEST7",
 )
 
 ### Predict
-y_true = df_test["storno"]
-X_test = df_test.drop(["storno"], axis=1)
+y_true = df_test["churn"]
+X_test = df_test.drop(["churn"], axis=1)
 
 preds, preds_proba = model_pl.predict(
     X=X_test,
-    predict_from_latest_fit=False,
+    predict_from_cached_fit=False,
     lgbm_fit=lgbm_fit,
+    cache_model_name=None,
 )
 
 pred6 = [0 if p < 0.6 else 1 for p in preds_proba]  # (pred_list >= 0.5).astype("int")

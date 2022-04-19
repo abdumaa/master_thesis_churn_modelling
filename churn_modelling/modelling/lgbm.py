@@ -228,22 +228,11 @@ class LGBM:
         #     )
         # )
 
-        # Retrain on entire train_set with best HPs
-        print("..4: Refit with best HP-set")
-        lgbm_best = lgb.LGBMClassifier(
-            boosting_type="gbdt",
-            n_jobs=-1,
-            **hp_fix_dict,
-            **lgbm_fit.best_params_,
-        )
-        lgbm_best_fit = lgbm_best.fit(X_train, y_train, **hp_eval_dict)
-        print("..5: Finished Refitting")
-
         # Save model
         if save_model:
-            print("..6: Save best model")
+            print("..4: Save best model")
             dump(
-                lgbm_best_fit,
+                lgbm_fit.best_estimator_,
                 f"/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_{cache_model_name}.joblib",  # find solution for that # noqa
             )
             if custom_loss is not None:
@@ -252,7 +241,7 @@ class LGBM:
                     f"/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/init_scores/lgbm_fit_{cache_model_name}.joblib",  # find solution for that # noqa
                 )
 
-        return lgbm_best_fit
+        return lgbm_fit.best_estimator_
 
     def predict(
         self, X, predict_from_cached_fit=True, lgbm_fit=None, cache_model_name=None, reduce_df_mem=True

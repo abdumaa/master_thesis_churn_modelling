@@ -587,10 +587,14 @@ Our modelling structure with EBM differs slightly due to the fact that we first 
 
 \subsubsection*{(iv) (Hyper)parameter search and Modelling Structure}
 
-To avoid overfitting and to ensure reliable and stable results we follow a strict modelling structure for both model approaches. Therefore we split our data set into a training (80$\%$), validation (10$\%$) and test set (10$\%$). Thereby the splits are performed in a stratified manner, ensuring approximately the same proportion of churners in all subsets. We randomly sample 1000 times from the presented set for each hyperparameter presented in the tables above. For each to be tested hyperparameter set we fit the underlying model using a 3-fold cross-validation on the training set to ensure reliable training scores. This totals 3000 fits in total. \\
-The validation set is used for both GBT and EBM to have an early-stoping-criterion evaluated on an unseen data set during fitting. After having fitted the 1000 candidates we pick the set of hyperparamaters which yields the best score metrics. With this set of hyperparameters we fit the underlying model once more, but this time with the entire training and validation set. This model is used, tested on the two test sets and presented as a candidate model for the prediction problem. The graphic X illustrates the data splitting, the hyperparameter search and the end model and its evaluation. \\
+To avoid overfitting and to ensure reliable and stable results we follow a strict modelling structure for both model approaches. Therefore we split our data set into a training (80$\%$), validation (10$\%$) and test set (10$\%$). Thereby the splits are performed in a stratified manner, ensuring approximately the same proportion of churners in all subsets. We randomly sample 100 times from the presented set for each hyperparameter presented in the tables above. For each to be tested hyperparameter set we fit the underlying model using a 3-fold cross-validation on the training set to ensure reliable training scores. This totals 300 fits in total. \\
+The validation set is used for both GBT and EBM to have an early-stoping-criterion evaluated on an unseen data set during fitting. After having fitted the 100 candidates we pick the set of hyperparamaters which yields the best score metrics. With this set of hyperparameters we fit the underlying model once more, but this time with the entire training and set and no cross-validation. This model is used, tested on the two test sets and presented as a candidate model for the prediction problem. The graphic X illustrates this entire process, which we will call Model-HP-Tuning-Loop (M-HPTL) from now on. \\
 \centerline{\includegraphics[height=9cm]{fitting_tuning_viz.png}}
-This modelling approach additionally ensures unbiased estimates of the model evaluation metrics, which will be presented in the next chapter. \\
+As the hyperparamaters of the underlying model are not the only hyperparameters we must optimize, there are three other loops which come on top of the M-HPTL. \\
+(1) We want to find the best sampling method to handle the imbalanced classes problem. Therefore different variants of downsampling, upsampling and SMOTE are used and passed into the M-HPTL. \\
+(2) Unfortunately, with the packages used in this work, there is no possibility to include the hyperparameters of the custom loss function in the above tuning loop. That is why second, we use different sets for $w_{0}$, $w_{1}$, $\alpha$ and $\gamma$ in another loop. \\
+(3) Last, we prove the efficiency and predictive power of quotation data in the setting of predicting customer churn. Therefore each time a dataset is passed into the loop, it enters it with and without the best quotation variable. \\
+Besides the tuning loop regarding the parameters of the cost-sensitive loss function, these additional loops target the data structure passed into M-HPTL. This is why this we call this outside loop the Structural-HP-Tuning-Loop (S-HPTL). This entire modelling approach is set up as it is to ensure reliable, robust and accurate results for the hyperparamaters, parameters and predictions. It additionally ensures robust estimates of the model evaluation metrics, which will be presented in the next chapter. \\
 
 
 \subsection{Model Evaluation Metrics} \par
@@ -826,9 +830,30 @@ We further summarize all evaluation matrices for B1 and B2 we are interested in 
 
 \subsection{Modelling Results} \par
 
-While presenting the results we want to emphasize, that for both modelling approaches GBT and EBM we use Graphic X as a structural guide ensuring robust and unbiased models and estimates. During hyperparameter tuning, for each hyperparameter we sample from the presented set presented in table X for GBT and from table Y for EBM. \\
+While presenting the results we want to emphasize, that for both modelling approaches GBT and EBM we use Graphic X as the Model-HP-Tuning-Loop (M-HPTL) and the additional Structural-HP-Tuning-Loop (S-HPTL) from section XY as a procedure guide ensuring robust and unbiased models and estimates. During M-HPTL, for each hyperparameter we sample from the corresponding set presented in table X for GBT and from table Y for EBM. \\
+Additionally, we loop over every combination of HPs used in S-HPTL, which belong to the sampling methods and the custom loss parameters $\alpha$ and $\gamma$. We will not sample from a set for S-HPTL, but instead determine a set for each HP and iterate through each possible combination. The sets for S-HPTL will be presented for each modelling approach seperately. \\
+We of course do not present each of the 300 fits performed in the inner loop (M-HPTL). Remember, that the M-HPTL nests in each iteration of the S-HPTL, which further increases the number of total fits. Therefore, we focus only on the M-HPTL optimal result, which is essentially one best model-hyperparameter set, its trained model and its evaluation scores. \\
+We also want to mention, that the dimension reduction method MRMR is applied after the preprocessing (which is determined by the set of HPs of the current iteration in S-HPTL). Specifically it might be the case, that for one sampling method a different set of quotation variables yields to be optimal than for another. Therefore for each iteration of S-HPTL we compute the optimal set of quotation variables with MRMR. Additionally, in each iteration of S-HPTL, we run the M-HPTL once with and without the best quotation variables, to determine the predictive power of quotation data. \\
 
 \subsubsection*{Gradient Boosted Trees Results}
+Table 6 summarizes the sets of HP's used for the S-HPTL for gradient boosted trees. "None" as a hyperparameter for sampling means that no sampling is performed and the length of the training data remains the same. "Down" (or "Up") downsamples (or upsamples) the data such that both classes have the same number of instances. "Down$\times X$" (or "Up$\times Y$") samples in a way that the number of instances in the majority (or minority) class is multiplied by $X$ (or $Y$). \\
+The normal log-loss function is minimized with the combination of $\alpha$ being "None" and $\gamma$ being "None". For $\alpha$ having assigned a value and $\gamma$ being "None" we optimize the "Simple Weighted Loss Function" defined in (\ref{loss_fct_wl}). If both parameters have a value the "Focal Loss Function" from (\ref{loss_fct_fl}) is minimized. \\
+Before presenting the results we want to make some additional notational remarks. We denote the best model resulting from M-HPTL for a specific iteration of S-HPTL by: "gtb\_\{sampling method\}\_\{custom loss parameters\}\_\{quotation variables\}". So for example "gtb\_d0.1\_a0.6g2\_wquot" represents the best model with a downsampled dataset with factor $0.1$, with a focal loss implementation of $\alpha=0.6$ and $\gamma=2$ and uncluding the best quotation variables. \\
+
+
+\begin{table}
+    \centering
+    \caption{Hyperparameter sets for S-HPTL - GBT}
+    \begin{tabular}{|l|l|}
+    \hline
+              & Set  \\
+    \hline
+    Sampling &  [None, Down, Down$\times0.1$, Down$\times0.5$, Up, Up$\times10$, Up$\times50$, SMOTE]  \\
+    Custom Loss & $\alpha$: [None, 0.6, 0.7, 0.8], $\gamma$: [None, 1, 2, 5] \\
+    Features & [without quotation variables, with best quotation variables] \\
+    \hline
+    \end{tabular}
+\end{table}
 
 \subsubsection*{Explainable Boosting Machine Results}
 
