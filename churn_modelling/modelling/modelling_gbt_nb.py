@@ -54,14 +54,14 @@ df_val = df_val[best_feats]
 
 
 ### lgbm
-alpha = 0.55
+alpha = 0.9
 hp_fix_dict = {
     "objective": "binary",
     "max_depth": -1,
     "n_estimators": 1000,
     "random_state": 1,
     "importance_type": "split",
-    "scale_pos_weight": ballanced_ratio,
+    "scale_pos_weight": (alpha / (1 - alpha)),
 }
 hp_tune_dict = {
     "num_leaves": sp_randint(6, 50),

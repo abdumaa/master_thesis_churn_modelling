@@ -637,6 +637,7 @@ For calculating the AUROC or the AUPRC there are multiple methods. All of them r
 
 
 \subsection{Interpreting the Models} \par
+\label{section:interpreting}
 
 One of the main tasks of this work is to interpret the structure of our models. More precisely, we want to know how each feauture interacts with the probability of an estimated churn. Espacially the usage of quotation data turns out to have high predicitve power, but we want to check if the assumed relationship is true and how the shape of the relationship in our models really looks like. This question is also answered for other features which turn out to have high predictive importance in our model. \\
 In prediction models in general, one has to make a decision between two questions the modelling approach needs to answer. The first question is what is predicted and the second is why is it predicted. In applications where missclassifications have low consequences or/and the why question does not deliver any benefit the interpretability may be neglected. Therefore e.g. in movie recommender systems (low missclassification costs) or in object detection applications (why is not important) very complex models are used to ensure that the what question is answered correctly. \\
@@ -838,8 +839,6 @@ We also want to mention, that the dimension reduction method MRMR is applied aft
 \subsubsection*{Gradient Boosted Trees Results}
 Table 6 summarizes the sets of HP's used for the S-HPTL for gradient boosted trees. "None" as a hyperparameter for sampling means that no sampling is performed and the length of the training data remains the same. "Down" (or "Up") downsamples (or upsamples) the data such that both classes have the same number of instances. "Down$\times X$" (or "Up$\times Y$") samples in a way that the number of instances in the majority (or minority) class is multiplied by $X$ (or $Y$). \\
 The normal log-loss function is minimized with the combination of $\alpha$ being "None" and $\gamma$ being "None". For $\alpha$ having assigned a value and $\gamma$ being "None" we optimize the "Simple Weighted Loss Function" defined in (\ref{loss_fct_wl}). If both parameters have a value the "Focal Loss Function" from (\ref{loss_fct_fl}) is minimized. \\
-Before presenting the results we want to make some additional notational remarks. We denote the best model resulting from M-HPTL for a specific iteration of S-HPTL by: "gtb\_\{sampling method\}\_\{custom loss parameters\}\_\{quotation variables\}". So for example "gtb\_d0.1\_a0.6g2\_wquot" represents the best model with a downsampled dataset with factor $0.1$, with a focal loss implementation of $\alpha=0.6$ and $\gamma=2$ and uncluding the best quotation variables. \\
-
 
 \begin{table}
     \centering
@@ -849,11 +848,164 @@ Before presenting the results we want to make some additional notational remarks
               & Set  \\
     \hline
     Sampling &  [None, Down, Down$\times0.1$, Down$\times0.5$, Up, Up$\times10$, Up$\times50$, SMOTE]  \\
-    Custom Loss & $\alpha$: [None, 0.6, 0.7, 0.8], $\gamma$: [None, 1, 2, 5] \\
+    Custom Loss & $\alpha$: [None, 0.6, 0.7, 0.8], $\gamma$: [None, 0.2, 0.5, 1, 2, 5] \\
     Features & [without quotation variables, with best quotation variables] \\
     \hline
     \end{tabular}
 \end{table}
+
+Before presenting the results we want to make some additional notational remarks. We denote the best model resulting from M-HPTL for a specific iteration of S-HPTL by: "gbt\_\{sampling method\}\_\{custom loss parameters\}". So for example "gbt\_d0.1\_a0.6g2" represents the best model with a downsampled dataset with factor $0.1$ and with a focal loss implementation of $\alpha=0.6$ and $\gamma=2$. Also, for now we concentrate on the models fitted including the best set of quotation variables. This is why this notation does not include an indicator for which features are used. With the best model at hand however we compare both with and without quotation variables results in order to show the importance of them. \\
+Moreover we do not present the resulting best model from each S-HPTL iteration, as we have $8\times4\times6\times2=384$ iterations in total. We focus on the main insights and present the best results in terms of evaluation metrics. Adding to that the effect that in each iteration 300 models are fitted inside the M-HPTL, we end up with 115,200 models in total. This of course results in a high computational time and complexity, but delivers the needed comparability and optimal (hyper)parameters. \\
+
+\setlength{\tabcolsep}{5pt}
+\begin{table}
+    \centering
+    \caption{GBT-Candidates Evaluations on Unseen Data}
+    \begin{tabular}{|lc|cccccc|}
+    \hline
+    Model                              & Test-Set & Accuracy        & Precision       & Recall          & F1              & AUROC           & AUPRC            \\ 
+    \hline
+    \multirow{2}{*}{gbt\_u10\_aNgN}    & OOS      & \textbf{0.9857} & \textbf{0.3246} & 0.3592          & \textbf{0.3410} & 0.8782          & 0.3231           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & \textbf{0.9843} & \textbf{0.2727} & 0.2051          & 0.2341          & 0.8438          & 0.1909           \\ 
+    \hline
+    \multirow{2}{*}{gbt\_d0.1\_aNgN}   & OOS      & 0.9790          & 0.2390          & 0.4757          & 0.3182          & 0.8921          & 0.3267           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.9767          & 0.1947          & 0.3162          & \textbf{0.2410} & 0.8485          & \textbf{0.2070}  \\ 
+    \hline
+    \multirow{2}{*}{gbt\_u\_aNgN}      & OOS      & 0.9162          & 0.0761          & 0.6408          & 0.1361          & 0.8791          & 0.3310           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.9126          & 0.0733          & 0.5556          & 0.1295          & 0.8389          & 0.1956           \\ 
+    \hline
+    \multirow{2}{*}{gbt\_d0.1\_a0.6gN} & OOS      & 0.9702          & 0.1803          & 0.5340          & 0.2696          & \textbf{0.9032} & \textbf{0.3338}  \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.9645          & 0.1234          & 0.3333          & 0.1801          & \textbf{0.8577} & 0.1924           \\ 
+    \hline
+    \multirow{2}{*}{gbt\_u\_a0.8gN}    & OOS      & 0.8487          & 0.0487          & 0.7379          & 0.0913          & 0.8746          & 0.2972           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.8378          & 0.0442          & 0.6239          & 0.0826          & 0.8251          & 0.1923           \\ 
+    \hline
+    \multirow{2}{*}{gbt\_u50\_aNg0.5}  & OOS      & 0.8970          & 0.0530          & 0.5340          & 0.0965          & 0.8452          & 0.0498           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.8884          & 0.0463          & 0.4360          & 0.0837          & 0.8045          & 0.0385           \\ 
+    \hline
+    \multirow{2}{*}{gbt\_sm\_aNg2}     & OOS      & 0.8285          & 0.0462          & 0.7961          & 0.0873          & 0.8808          & 0.1267           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.8157          & 0.0405          & 0.6496          & 0.0762          & 0.8293          & 0.0732           \\ 
+    \hline
+    \multirow{2}{*}{gbt\_u50\_a0.6g1}  & OOS      & 0.8973          & 0.0471          & 0.4660          & 0.0855          & 0.7909          & 0.0340           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.8872          & 0.0433          & 0.4102          & 0.0784          & 0.7786          & 0.0324           \\ 
+    \hline
+    \multirow{2}{*}{gbt\_sm\_a0.7g2}   & OOS      & 0.5378          & 0.0196          & \textbf{0.8932} & 0.0383          & 0.8074          & 0.0397           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.5237          & 0.0208          & \textbf{0.8632} & 0.0406          & 0.7864          & 0.0358           \\
+    \hline
+    \end{tabular}
+\end{table}
+
+First insights which are generated through looking at the results are the following: \\
+(1) The out-of-period evaluation scores for almost all models are lower than the ones for out-of-sample. This holds true for almost all applications and was expected. \\
+(2) Sampling towards a balanced training data set in general creates confidence in the model to predict the minority class. This is reflected in a dropping precision and a rising recall. \\
+(3) Eventhough SMOTE is said to be a more advanced and reliable approach than upsampling, the latter yields better results in our application.\\
+(4) Using weights $\alpha$ in the loss functions delivers same results to sampling in terms of confidence. Additionally with a too high $\alpha$ (starting at $\alpha=0.7$) the F1-Score and the AUPRC start to drop.\\
+(5) Adding $\gamma\neq0$ to the loss, we also observe confidence in the model, but this confidence is not restricted towards predicting the minority class. Paired with a low $\alpha$ a too high $\gamma$ ($>1$) can have backfiring effects and lead to no predictions of the minority class. When a too high $\gamma$ is paired with a high $\alpha$ however, the model fit can lead to only predicting the minority class. The main takeaway for the usage of focal loss is to carefully select the parameters, as with wrong calibration it can lead to overconfidence. \\
+(6) Eventhough using a cost-sensitive loss function is highly suggested in the literature, standard sampling methods alone or paired with a cost-sensitive loss yield better and more robust results in our application. \\
+
+\textit{Best GBT model candidate}
+Due to the high class imballance, the main evaluation metrics we look at in this work are the AUPRC and the F1-Score. There is no candidate which scores highest in both metrics. Nevertheless "gbt\_u10\_aNgN" has by far the highest F1-Score and only lacks a small amount behind other candidates in terms of AUPRC. Therefore the model that represents our best GBT candidate is obtained with an upsampled ($\times 10$) minority class and no cost-sensitive loss function. It uses "n\_requests\_1", "diff\_n\_requests\_3", "diff\_avg\_vjnbe\_requests\_3" and "other\_hsntsn\_requests\_3" as the optimal quotation variable set resulting from MRMR dimension reduction.
+The trained model yields a 224\% (and 133\%) improvement in the F1-Score OOS (and OOP) over the Baseline 2. The increase in AUPRC OOS (and OOP) for B2 amounts to 1182\% (and 682\%). \\
+The predictive power of quotation data is illustrated in the fact that "gbt\_u10\_aNgN"'s evaluation scores are much higher with the best set of quotation variables than without. The absolute deviation of the F1-Score without quotation variables on OOS data lies at $-0.2234$, for OOP at $-0.1267$. The AUPRC is $0.2515$ lower for OOS data and for OOP $0.1342$ lower. This fact also holds true for all other GBT candidates presented in Table X. Table Y summarizes the gain in the evaluation metrics generated through the inclusion of quotation data for all candidates in Table X. \\
+
+\begin{table}
+    \centering
+    \caption{GBT-Candidates Improvement with Quotation Data}
+    \begin{tabular}{|lc|cccccc|}
+    \hline
+    Model                              & Test-Set & Accuracy        & Precision       & Recall          & F1              & AUROC           & AUPRC            \\ 
+    \hline
+    \multirow{2}{*}{gbt\_u10\_aNgN}    & OOS      & \textbf{0.9857} & \textbf{0.3246} & 0.3592          & \textbf{0.3410} & 0.8782          & 0.3231           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & \textbf{0.9843} & \textbf{0.2727} & 0.2051          & 0.2341          & 0.8438          & 0.1909           \\ 
+    \hline
+    \multirow{2}{*}{gbt\_d0.1\_aNgN}   & OOS      & 0.9790          & 0.2390          & 0.4757          & 0.3182          & 0.8921          & 0.3267           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.9767          & 0.1947          & 0.3162          & \textbf{0.2410} & 0.8485          & \textbf{0.2070}  \\ 
+    \hline
+    \multirow{2}{*}{gbt\_u\_aNgN}      & OOS      & 0.9162          & 0.0761          & 0.6408          & 0.1361          & 0.8791          & 0.3310           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.9126          & 0.0733          & 0.5556          & 0.1295          & 0.8389          & 0.1956           \\ 
+    \hline
+    \multirow{2}{*}{gbt\_d0.1\_a0.6gN} & OOS      & 0.9702          & 0.1803          & 0.5340          & 0.2696          & \textbf{0.9032} & \textbf{0.3338}  \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.9645          & 0.1234          & 0.3333          & 0.1801          & \textbf{0.8577} & 0.1924           \\ 
+    \hline
+    \multirow{2}{*}{gbt\_u\_a0.8gN}    & OOS      & 0.8487          & 0.0487          & 0.7379          & 0.0913          & 0.8746          & 0.2972           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.8378          & 0.0442          & 0.6239          & 0.0826          & 0.8251          & 0.1923           \\ 
+    \hline
+    \multirow{2}{*}{gbt\_u50\_aNg0.5}  & OOS      & 0.8970          & 0.0530          & 0.5340          & 0.0965          & 0.8452          & 0.0498           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.8884          & 0.0463          & 0.4360          & 0.0837          & 0.8045          & 0.0385           \\ 
+    \hline
+    \multirow{2}{*}{gbt\_sm\_aNg2}     & OOS      & 0.8285          & 0.0462          & 0.7961          & 0.0873          & 0.8808          & 0.1267           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.8157          & 0.0405          & 0.6496          & 0.0762          & 0.8293          & 0.0732           \\ 
+    \hline
+    \multirow{2}{*}{gbt\_u50\_a0.6g1}  & OOS      & 0.8973          & 0.0471          & 0.4660          & 0.0855          & 0.7909          & 0.0340           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.8872          & 0.0433          & 0.4102          & 0.0784          & 0.7786          & 0.0324           \\ 
+    \hline
+    \multirow{2}{*}{gbt\_sm\_a0.7g2}   & OOS      & 0.5378          & 0.0196          & \textbf{0.8932} & 0.0383          & 0.8074          & 0.0397           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.5237          & 0.0208          & \textbf{0.8632} & 0.0406          & 0.7864          & 0.0358           \\
+    \hline
+    \end{tabular}
+\end{table}
+
+\textit{Interpretation of the model}
+
+We use (model) to shed some light behind this black-box and make it interpretable with PDP, SHAP and LIME. All three methods are explained in section \ref{section:interpreting}. \\
+Figure X presents the PDP's for the main drivers behind this model. The first graph represents the PDP for variable "n\_requests\_1" and confirms the hypothesis of a strong positive relationship between it and the probability of a churn. The relationship shown for "diff\_n\_requests\_3" is also as expected, the higher the difference of quotation activity to the normal behavior the higher the probability of a churn. The insights generated through the PDP's for the other two quotation variables do not show the expected relationship. This however can be caused by the disadvantage of PDP's when facing correlated explanatory variables. \\
+The lower two graphs show the two non-quotation variables which have the strongest relationship with the target variable. On the left we see that the number of accidents since the start of the contract go along with a higher predicted probability on average. Considering the fact, that an accident gives customers the exceptional right of mid-contract-period termination, this relationship is intuitive. More importantly, following an accident the insurer raises the insurance fee in most cases which obviously raises the probability of a churn. \\
+The strongest partial dependeny relationship is shown in the age of the youngest driver registered in the contract. The explanation for this effect may be that driving-license-freshers are typically first registered in the insurance contract of their parents or other relatives. As a reaction insurance companies raise the insurance fee, as young drivers typically pose a higher risk for accidents. The reaction of the customer is a higher probability of churn. \\
+
+\begin{figure}
+\centering
+    \begin{subfigure}{.55\textwidth}
+      \centering
+      \includegraphics[width=1\linewidth]{pdp_n_requests_1.png}
+    \end{subfigure}%
+    \begin{subfigure}{.55\textwidth}
+      \centering
+      \includegraphics[width=1\linewidth]{pdp_diff_n_requests_3.png}
+    \end{subfigure} \\
+    \begin{subfigure}{.55\textwidth}
+        \centering
+        \includegraphics[width=1\linewidth]{pdp_diff_avg_vjnbe_requests_3.png}
+    \end{subfigure}%
+    \begin{subfigure}{.55\textwidth}
+        \centering
+        \includegraphics[width=1\linewidth]{pdp_other_hsntsn_requests_3.png}
+    \end{subfigure} \\
+    \begin{subfigure}{.55\textwidth}
+        \centering
+        \includegraphics[width=1\linewidth]{pdp_n_accident.png}
+    \end{subfigure}%
+    \begin{subfigure}{.55\textwidth}
+        \centering
+        \includegraphics[width=1\linewidth]{pdp_age_youngest_driver.png}
+    \end{subfigure} \\
+\caption{Partial dependency plots (PDP)}
+\label{fig:pdp}
+\end{figure}
+
+Figure Y represents SHAP's summary-plot, where each dot represents one sample and the contribution of its corresponding feature value (y-axis) to the predicted log-odds (x-axis). The insights generated through this plot are almost all inline with the ones from PDP. Here however, "diff\_avg\_vjnbe\_requests\_3" seems to have a higher importance. More precisely, for some samples a high deviation between the average price shown during the requests and the contract fee increases the predicted probability by the most among all variable contributions. \\
+\centerline{\includegraphics[height=10cm]{shap_summary.png}}
+
+Figure Y shows a way to transform the local model-agnostic method of SHAP to a globally interpretable one. The SHAP-values of a single prediction also provide a good explanations of how the prediction is generated and how each variable value contributed. In our context of customer churn single explanations can be applied on predicted churners before taking any action (call customer or give rebates) to fully understand the reason of the prediction. Figure XY shows how the SHAP-Values can be visualized. There, each bar visualizes the estimated Shapley value $\delta^{(j)}$ of the corresponding variable value. Stacking all bars on top of each other results in a representation on how the predicted log differs from the sample mean.\\
+\centerline{\includegraphics[height=8cm]{shap_waterfall_example.png}}
+In this example, the difference in the average price shown during the requests has the highest contribution to the prediction. This customer also has a young driver registered which also rises the model probability. The fact, that 95\% of the requests belonging to that customer included a different car than the one in his contract, has the third highest contribution. All other variable values only have minor contributions for this example. \\
 
 \subsubsection*{Explainable Boosting Machine Results}
 
