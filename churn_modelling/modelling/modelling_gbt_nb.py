@@ -36,7 +36,7 @@ from churn_modelling.preprocessing.mrmr import _correlation_scorer
 # Load data
 df_trainval_temp = pd.read_csv('../data/toydata_trainval.csv', index_col=0)
 df_trainval = df_trainval_temp.copy()
-df_test = pd.read_csv('../data/toydata_oos.csv', index_col=0)
+df_oos = pd.read_csv('../data/toydata_oos.csv', index_col=0)
 
 # Load LGBM
 model_pl = LGBM(df=df_trainval, target="churn", test_size=0.1)
@@ -106,7 +106,7 @@ X_test = df_test.drop(["churn"], axis=1)
 preds, preds_proba = model_pl.predict(
     X=X_test,
     predict_from_cached_fit=False,
-    lgbm_fit=lgbm_fit,
+    fit=lgbm_fit,
     cache_model_name=None,
 )
 

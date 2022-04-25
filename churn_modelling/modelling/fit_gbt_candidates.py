@@ -7,7 +7,6 @@ from sklearn.metrics import (
     accuracy_score,
     roc_auc_score,
     average_precision_score,
-    confusion_matrix,
 )
 import os
 import glob
@@ -134,13 +133,13 @@ def create_fits_and_predictions(sampling_dict, cl_alpha=None, cl_gamma=None, see
             preds_oos, preds_proba_oos = model_pl.predict(
                 df_oos,
                 predict_from_cached_fit=False,
-                lgbm_fit=best_fit,
+                fit=best_fit,
                 cache_model_name=cache_model_name,
             )
             preds_oop, preds_proba_oop = model_pl.predict(
                 df_oop,
                 predict_from_cached_fit=False,
-                lgbm_fit=best_fit,
+                fit=best_fit,
                 cache_model_name=cache_model_name,
             )
 

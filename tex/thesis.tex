@@ -837,8 +837,8 @@ We of course do not present each of the 300 fits performed in the inner loop (M-
 We also want to mention, that the dimension reduction method MRMR is applied after the preprocessing (which is determined by the set of HPs of the current iteration in S-HPTL). Specifically it might be the case, that for one sampling method a different set of quotation variables yields to be optimal than for another. Therefore for each iteration of S-HPTL we compute the optimal set of quotation variables with MRMR. Additionally, in each iteration of S-HPTL, we run the M-HPTL once with and without the best quotation variables, to determine the predictive power of quotation data. \\
 
 \subsubsection*{Gradient Boosted Trees Results}
-Table 6 summarizes the sets of HP's used for the S-HPTL for gradient boosted trees. "None" as a hyperparameter for sampling means that no sampling is performed and the length of the training data remains the same. "Down" (or "Up") downsamples (or upsamples) the data such that both classes have the same number of instances. "Down$\times X$" (or "Up$\times Y$") samples in a way that the number of instances in the majority (or minority) class is multiplied by $X$ (or $Y$). \\
-The normal log-loss function is minimized with the combination of $\alpha$ being "None" and $\gamma$ being "None". For $\alpha$ having assigned a value and $\gamma$ being "None" we optimize the "Simple Weighted Loss Function" defined in (\ref{loss_fct_wl}). If both parameters have a value the "Focal Loss Function" from (\ref{loss_fct_fl}) is minimized. \\
+Table 6 summarizes the sets of HP's used for the S-HPTL for gradient boosted trees. "N" as a hyperparameter for sampling means that no sampling is performed and the length of the training data remains the same. "d" (or "u") downsamples (or upsamples) the data such that both classes have the same number of instances. "dX" (or "uY") samples in a way that the number of instances in the majority (or minority) class is multiplied by $X$ (or $Y$). \\
+The normal log-loss function is minimized with the combination of $\alpha$ being "N" and $\gamma$ being "N". For $\alpha$ having assigned a value and $\gamma$ being "N" we optimize the "Simple Weighted Loss Function" defined in (\ref{loss_fct_wl}). If both parameters have a value the "Focal Loss Function" from (\ref{loss_fct_fl}) is minimized. \\
 
 \begin{table}
     \centering
@@ -847,9 +847,9 @@ The normal log-loss function is minimized with the combination of $\alpha$ being
     \hline
               & Set  \\
     \hline
-    Sampling &  [None, Down, Down$\times0.1$, Down$\times0.5$, Up, Up$\times10$, Up$\times50$, SMOTE]  \\
-    Custom Loss & $\alpha$: [None, 0.6, 0.7, 0.8], $\gamma$: [None, 0.2, 0.5, 1, 2, 5] \\
-    Features & [without quotation variables, with best quotation variables] \\
+    Sampling &  [N, d, d0.1, d0.5, u, u10, u50, sm]  \\
+    Custom Loss & $\alpha$: [N, 0.6, 0.7, 0.8], $\gamma$: [N, 0.2, 0.5, 1, 2, 5] \\
+    Features & [with\_quot, no\_quot] \\
     \hline
     \end{tabular}
 \end{table}
@@ -912,8 +912,8 @@ First insights which are generated through looking at the results are the follow
 (5) Adding $\gamma\neq0$ to the loss, we also observe confidence in the model, but this confidence is not restricted towards predicting the minority class. Paired with a low $\alpha$ a too high $\gamma$ ($>1$) can have backfiring effects and lead to no predictions of the minority class. When a too high $\gamma$ is paired with a high $\alpha$ however, the model fit can lead to only predicting the minority class. The main takeaway for the usage of focal loss is to carefully select the parameters, as with wrong calibration it can lead to overconfidence. \\
 (6) Eventhough using a cost-sensitive loss function is highly suggested in the literature, standard sampling methods alone or paired with a cost-sensitive loss yield better and more robust results in our application. \\
 
-\textit{Best GBT model candidate}
-Due to the high class imballance, the main evaluation metrics we look at in this work are the AUPRC and the F1-Score. There is no candidate which scores highest in both metrics. Nevertheless "gbt\_u10\_aNgN" has by far the highest F1-Score and only lacks a small amount behind other candidates in terms of AUPRC. Therefore the model that represents our best GBT candidate is obtained with an upsampled ($\times 10$) minority class and no cost-sensitive loss function. It uses "n\_requests\_1", "diff\_n\_requests\_3", "diff\_avg\_vjnbe\_requests\_3" and "other\_hsntsn\_requests\_3" as the optimal quotation variable set resulting from MRMR dimension reduction.
+\textit{Best GBT model candidate} \\
+Due to the high class imballance, the main evaluation metrics we look at in this work are the AUPRC and the F1-Score. There is no candidate which scores highest in both metrics. Nevertheless "gbt\_u10\_aNgN" has by far the highest F1-Score and only lacks a small amount behind other candidates in terms of AUPRC. Therefore the model that represents our best GBT candidate is obtained with an upsampled ($\times 10$) minority class and no cost-sensitive loss function. It uses "n\_requests\_1", "diff\_n\_requests\_3", "diff\_avg\_vjnbe\_requests\_3" and "other\_hsntsn\_requests\_3" as the optimal quotation variable set resulting from MRMR dimension reduction. \\
 The trained model yields a 224\% (and 133\%) improvement in the F1-Score OOS (and OOP) over the Baseline 2. The increase in AUPRC OOS (and OOP) for B2 amounts to 1182\% (and 682\%). \\
 The predictive power of quotation data is illustrated in the fact that "gbt\_u10\_aNgN"'s evaluation scores are much higher with the best set of quotation variables than without. The absolute deviation of the F1-Score without quotation variables on OOS data lies at $-0.2234$, for OOP at $-0.1267$. The AUPRC is $0.2515$ lower for OOS data and for OOP $0.1342$ lower. This fact also holds true for all other GBT candidates presented in Table X. Table Y summarizes the gain in the evaluation metrics generated through the inclusion of quotation data for all candidates in Table X. \\
 
@@ -963,7 +963,7 @@ The predictive power of quotation data is illustrated in the fact that "gbt\_u10
     \end{tabular}
 \end{table}
 
-\textit{Interpretation of the model}
+\textit{Interpretation of GBT candidate}
 
 We use (model) to shed some light behind this black-box and make it interpretable with PDP, SHAP and LIME. All three methods are explained in section \ref{section:interpreting}. \\
 Figure X presents the PDP's for the main drivers behind this model. The first graph represents the PDP for variable "n\_requests\_1" and confirms the hypothesis of a strong positive relationship between it and the probability of a churn. The relationship shown for "diff\_n\_requests\_3" is also as expected, the higher the difference of quotation activity to the normal behavior the higher the probability of a churn. The insights generated through the PDP's for the other two quotation variables do not show the expected relationship. This however can be caused by the disadvantage of PDP's when facing correlated explanatory variables. \\
@@ -996,7 +996,7 @@ The strongest partial dependeny relationship is shown in the age of the youngest
         \centering
         \includegraphics[width=1\linewidth]{pdp_age_youngest_driver.png}
     \end{subfigure} \\
-\caption{Partial dependency plots (PDP)}
+\caption{Partial dependency plots (PDP) for GBT}
 \label{fig:pdp}
 \end{figure}
 
@@ -1006,8 +1006,156 @@ Figure Y represents SHAP's summary-plot, where each dot represents one sample an
 Figure Y shows a way to transform the local model-agnostic method of SHAP to a globally interpretable one. The SHAP-values of a single prediction also provide a good explanations of how the prediction is generated and how each variable value contributed. In our context of customer churn single explanations can be applied on predicted churners before taking any action (call customer or give rebates) to fully understand the reason of the prediction. Figure XY shows how the SHAP-Values can be visualized. There, each bar visualizes the estimated Shapley value $\delta^{(j)}$ of the corresponding variable value. Stacking all bars on top of each other results in a representation on how the predicted log differs from the sample mean.\\
 \centerline{\includegraphics[height=8cm]{shap_waterfall_example.png}}
 In this example, the difference in the average price shown during the requests has the highest contribution to the prediction. This customer also has a young driver registered which also rises the model probability. The fact, that 95\% of the requests belonging to that customer included a different car than the one in his contract, has the third highest contribution. All other variable values only have minor contributions for this example. \\
+This concludes the result presentation of the GBT modelling approach. We presented 9 candidate models, all using different sets of sampling methods, loss functions and explanatory variables. The best model turned out to be the result of an upsampling approach in combination with no cost-sensitive loss-function. The quotation data turned out to have high predictive power for GBT and we used explainability methods to examine the relationship between predicition and the main drivers of the model. In the next section we compare these results with the EBM approach. \\
 
 \subsubsection*{Explainable Boosting Machine Results}
+
+The HP-Sets for the S-HPTL we use for explainable boosting machines is summarized in Table Z. The same logic for the notations and abbreviations from GBT results presentation applies here. As custom-loss functions are not applicable with EBM we only have two sets of HP for the S-HPTL. So in total we have $8\times2=16$ iterations in S-HPTL, which decreases the computational complexity of finding the ideal preprocessing configuration. \\
+However the EBM approach has a significantly higher fitting time than GBT. As the authors of EBM suggest, that EBM does not need to be tuned as much as GBT in terms of model-hyperparamaters, we only sample 10 times from the presented set in table Y. Combined with the 3-fold cross-validation we end up with $16\times10\times3=480$ models fitted for EBM in total. Eventhough this is way less than the amount of GBT models fitted, "lightgbm"'s training time is still able to outperform EBM for the entire S-HPTL and M-HPTL. This is as a major drawback of EBM. Espacially when the model is operationalized for predicting customer churn in a way that it is retrained in constant time intervals.\\
+
+\begin{table}
+    \centering
+    \caption{Hyperparameter sets for S-HPTL - GBT}
+    \begin{tabular}{|l|l|}
+    \hline
+              & Set  \\
+    \hline
+    Sampling &  [N, d, d0.1, d0.5, u, u10, u50, sm]  \\
+    Features & [with\_quot, no\_quot] \\
+    \hline
+    \end{tabular}
+\end{table}
+
+Also, regarding the best model resulting from M-HPTL for a specific iteration of S-HPTL we use a similar notation: "ebm\_\{sampling method\}". This notation does not include an indicator for which features are used, as we first only present model performances including the best set of quotation variable. With the best model at hand however we compare both with and without quotation variables results in order to show the relevance of quotation data. Table Y summarizes the best 5 models and their OOS and OOP performances.\\
+
+\begin{table}
+    \centering
+    \caption{EBM-Candidates Evaluations on Unseen Data}
+    \begin{tabular}{|lc|cccccc|}
+    \hline
+    Model                              & Test-Set & Accuracy        & Precision       & Recall          & F1              & AUROC           & AUPRC            \\ 
+    \hline
+    \multirow{2}{*}{ebm\_none}    & OOS      & \textbf{0.9912} & \textbf{0.8000} & 0.1942          & 0.3125 & 0.5968          & 0.1636           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & \textbf{0.9892} & \textbf{0.7647} & 0.1111          & 0.1940          & 0.5554          & \textbf{0.0954}           \\
+    \hline
+    \multirow{2}{*}{ebm\_d0.1}   & OOS      & 0.9821          & 0.2683          & 0.4272          & 0.3296          & 0.7075          & 0.1205           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.9808          & 0.2302          & 0.2735          & \textbf{0.2500} & 0.6313          & 0.0715  \\ 
+    \hline
+    \multirow{2}{*}{ebm\_d0.5}      & OOS      & 0.9911          & 0.6750          & 0.2621          & \textbf{0.3776}          & 0.6304          & \textbf{0.1845}           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.9885          & 0.5294          & 0.1538          & 0.2384          & 0.5761          & 0.0913           \\ 
+    \hline
+    \multirow{2}{*}{ebm\_d} & OOS      & 0.8050          & 0.0412          & \textbf{0.8058}          & 0.0784          & \textbf{0.8054} & 0.0352  \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.7941          & 0.0420          & \textbf{0.7607}          & 0.0796          & \textbf{0.7776} & 0.0347           \\ 
+    \hline
+    \multirow{2}{*}{ebm\_u10}    & OOS      & 0.9822          & 0.2582          & 0.3883          & 0.3101          & 0.6884          & 0.1065           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.9805          & 0.2090          & 0.2393          & 0.2231          & 0.6143          & 0.0589           \\ 
+    \hline
+    \end{tabular}
+\end{table}
+
+This table delivers following insights regarding best sampling methods and comparison to GBT: \\
+(1) The F1-Score is comparable to - and for one candidate even higher than - the GBT candidates. The AUROC and AUPRC however are lower for all EBM-candidates. \\
+(2) For almost all EBM-candidates, the differences between OOS ans OOP evaluation scores as high as in GBT. \\
+(3) Same observations apply for EBM as for GBT in terms of sampling effectiveness and implications on evaluation metrics. \\
+
+\textit{Best EBM model candidate} \\
+Looking at the AUPRC and the F1-Score, "ebm\_d0.5" scores the best on the OOS set. Eventhough it is not the best candidate in terms of OOP evaluation, there is no other candidate which outperforms it in both metrics on OOP data. Therefore we pick this model using a downsampled ($\times 0.5$) training data set as the best EBM-candidate. The quotation variables which survived the MRMR-filtering are also: "n\_requests\_1", "diff\_n\_requests\_3", "diff\_avg\_vjnbe\_requests\_3" and "other\_hsntsn\_requests\_3". Optimal interactions which are detected with the FAST algorithm are: \\
+1. diff\_avg\_vjnbe\_requests\_3 x age\_youngest\_driver \\
+2. diff\_avg\_vjnbe\_requests\_3 x n\_accident \\
+3. other\_hsntsn\_requests\_3 x vehicle\_age \\
+4. diff\_avg\_vjnbe\_requests\_3 x age\_contract\_holder \\
+5. diff\_avg\_vjnbe\_requests\_3 x years\_driving\_license \\
+6. diff\_avg\_vjnbe\_requests\_3 x contract\_age\_months \\
+7. diff\_avg\_vjnbe\_requests\_3 x other\_hsntsn\_requests\_3 \\
+8. diff\_avg\_vjnbe\_requests\_3 x sum\_accident\_cost \\
+9. n\_requests\_1 x age\_youngest\_driver \\
+The trained EBM-model yields a 258\% (and 126\%) improvement in the F1-Score OOS (and OOP) over the Baseline 2. The increase in AUPRC OOS (and OOP) for B2 amounts to 632\% (and 262\%). \\
+The EBM modelling approach also highlights the predictive power of quotation data in churn prediction application. Absolute differences in the F1-Score without quotation variables constitute to $-0.3776$ for OOS evaluation, for OOP to $-0.2216$. The AUPRC is $0.1742$ lower for OOS data, for OOP $0.0754$ lower. This effect is also visable for all other candidates of EBM and is summarized in table 0. \\
+
+\begin{table}
+    \centering
+    \caption{EBM-Candidates Improvement with Quotation Data}
+    \begin{tabular}{|lc|cccccc|}
+    \hline
+    Model                              & Test-Set & Accuracy        & Precision       & Recall          & F1              & AUROC           & AUPRC            \\ 
+    \hline
+    \multirow{2}{*}{ebm\_none}    & OOS      & \textbf{0.9912} & \textbf{0.8000} & 0.1942          & 0.3125 & 0.5968          & 0.1636           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & \textbf{0.9892} & \textbf{0.7647} & 0.1111          & 0.1940          & 0.5554          & \textbf{0.0954}           \\
+    \hline
+    \multirow{2}{*}{ebm\_d0.1}   & OOS      & 0.9821          & 0.2683          & 0.4272          & 0.3296          & 0.7075          & 0.1205           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.9808          & 0.2302          & 0.2735          & \textbf{0.2500} & 0.6313          & 0.0715  \\ 
+    \hline
+    \multirow{2}{*}{ebm\_d0.5}      & OOS      & 0.9911          & 0.6750          & 0.2621          & \textbf{0.3776}          & 0.6304          & \textbf{0.1845}           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.9885          & 0.5294          & 0.1538          & 0.2384          & 0.5761          & 0.0913           \\ 
+    \hline
+    \multirow{2}{*}{ebm\_d} & OOS      & 0.8050          & 0.0412          & \textbf{0.8058}          & 0.0784          & \textbf{0.8054} & 0.0352  \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.7941          & 0.0420          & \textbf{0.7607}          & 0.0796          & \textbf{0.7776} & 0.0347           \\ 
+    \hline
+    \multirow{2}{*}{ebm\_u10}    & OOS      & 0.9822          & 0.2582          & 0.3883          & 0.3101          & 0.6884          & 0.1065           \\ 
+    \cdashline{2-8}[1pt/1pt]
+                                       & OOP      & 0.9805          & 0.2090          & 0.2393          & 0.2231          & 0.6143          & 0.0589           \\ 
+    \hline
+    \end{tabular}
+\end{table}
+
+\textit{Interpretation of EBM candidate}
+
+EBM's big advantage is its simple interpretability. The addition of the individual shape functions' values, which each at most take 2 explanatory variables (2 for interactions) as input, forms the log odds. Each shape function takes at most 2 explanatory variables (2 for interactions) as input. Therefore looking at these shape functions tells us the relationship of variable (or variable interaction) and predicted log odds. Also, because of the additive model structure, local and global interpretations are equal for EBM. \\
+
+\begin{figure}
+    \centering
+        \begin{subfigure}{.55\textwidth}
+          \centering
+          \includegraphics[width=1\linewidth]{shape_function_n_requests_1.png}
+        \end{subfigure}%
+        \begin{subfigure}{.55\textwidth}
+          \centering
+          \includegraphics[width=1\linewidth]{shape_function_diff_n_requests_3.png}
+        \end{subfigure} \\
+        \begin{subfigure}{.55\textwidth}
+            \centering
+            \includegraphics[width=1\linewidth]{shape_function_diff_avg_vjnbe_requests_3.png}
+        \end{subfigure}%
+        \begin{subfigure}{.55\textwidth}
+            \centering
+            \includegraphics[width=1\linewidth]{shape_function_other_hsntsn_requests_3.png}
+        \end{subfigure} \\
+        \begin{subfigure}{.55\textwidth}
+            \centering
+            \includegraphics[width=1\linewidth]{shape_function_n_accident.png}
+        \end{subfigure}%
+        \begin{subfigure}{.55\textwidth}
+            \centering
+            \includegraphics[width=1\linewidth]{shape_function_age_youngest_driver.png}
+        \end{subfigure} \\
+    \caption{Shape functions of EBM}
+    \label{fig:shapefct}
+\end{figure}
+
+Figure R shows the main drivers for the best performing EBM candidate. Note that the plots should be interpreted carefully and should not be falsely compared to the PDP plots. Note, that in contrast to the PDP's for GBT, the y-axis now represents the value of the shape function. For a specific variable value, the value of the shape function is its additive contribution to the log odds. Figure B shows how the predicted probability depends on the log odds. \\
+What stands out in this figure is that quotation variables have stronger relationships with the log odds (and therefore also with the predicted probability of a churn) than non-quotation variables. This insight again strongly supports the inclusion of quotation variables for churn modelling. \\
+Additionally, all plots show the expected behavior of variable-target relationship. For "n\_requests\_1" for example, the log-odds contribution rises sharply from below 0 to 0.8 with more than 0 requests. Except the drop at around 55 requests, the contribution rises steadily to 1.5 with more than 100 requests. \\
+The plot for "diff\_n\_requests\_3" shows the expected behavior for positive deviations, but also generates a new hypothesis for negative deviations. The peculiarity is the again sharply rising contribution at around diff\_n\_requests\_3 $=-17$. It could be explained by the phenomenon, that customers who normally show high quotation variables but did not show them in the last 3 months have already predecided to only look for other insurers before churning. This relationship was not visable with explainability approaches for GBT. \\
+The strongest contributions to the log odds are generated by rising deviations in request-price versus contract-price and an increasing percentage of deviating car searches. For "diff\_avg\_vjnbe\_requests\_3" $=40$ the contribution reaches a value of 4, whereas with 100\% deviating car searches the contribution amounts to around 2.9. \\
+The best non-quotation variables also show an expected relationship. "n\_accident"'s contribution to the log odds rises approximately linearly from 0 to 1.4 for 4 accidents in the contract period. A negative relationship is shown by the age of the youngest driver and its contribution, until the age reaches 28. For older youngest drivers it stays stable at around -0.9. \\
+Eventhough the interaction variables do not show strong contributions on the log odds, we present one example interaction of "diff\_avg\_vjnbe\_requests\_3" and "n\_accident" in Figure S. It is an example for how even interactions can be visualized and interpreted. All other variables and variable pairs only have a comparably weak relationship and are therefore not presented. \\
+\centerline{\includegraphics[height=7cm]{shape_2dim.png}}
+To summarize the results for the EBM approach we presented 5 candidate models, all using different sets of sampling methods and explanatory variables. Downsampling the majority class by 50\% and including the best set of quotation variables yielded the best evaluation scores. Plots of individual shape functions enable to easily examine relationships between log odds and variable of interest. Besides confirming preassumptions made for relationships, the plot gave new insights. We are now able to compare both modelling approaches and simulate their improvement over the status quo, when deployed in practice. \\
+
+\subsubsection*{Simulation: Comparison of GBT and EBM}
+
+The goal of this work is to compare both modelling approaches in two areas. The first criterium is the evaluation (F1-Score, AUPRC) on unseen data. We also emphasize the importance of interpretability and therefore this is the second criterium. We shortly summarize which model of the two best candidates wins which criterium. \\
+Eventhough EBM is not able to capture all higher order interactions relevant for the modelling problem, in our application it reaches a higher F1-Score than the GBT candidate. The AUPRC-metric however belongs to GBT, as it is almost 1.5 times as high for OOS data, for OOP almost 2 times. \\
+The F1-Score clearly depends on the selected cutoff $\tau$, which assigns a prediction based on its probability to the two classes. We therefore evaluate Precision, Recall and the resulting F1-Score for both candidates for different values of $\tau$ in Figure X. The lower AUPRC of EBM can be explained by low recalls and precisions for most of $\tau$'s space. The lower F1-Score for GBT however could be caused by $\tau=0.5$ not being the optimal cutoff. \\
 
 
 - In conclusion Augmented Intelligence erwähnen? Sagen, dass das Modell nicht alleine entscheiden sollte, sondern nur Entscheidungsunterstützend dient usw.

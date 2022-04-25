@@ -244,20 +244,20 @@ class LGBM:
         return lgbm_fit.best_estimator_
 
     def predict(
-        self, X, predict_from_cached_fit=True, lgbm_fit=None, cache_model_name=None, reduce_df_mem=True
+        self, X, predict_from_cached_fit=True, fit=None, cache_model_name=None, reduce_df_mem=True
     ):
         """Predict for X Churn probabibilities."""
         # Load model or use passed fit
-        if lgbm_fit is not None and not predict_from_cached_fit:
-            lgbm = lgbm_fit
-        elif predict_from_cached_fit and lgbm_fit is None:
+        if fit is not None and not predict_from_cached_fit:
+            lgbm = fit
+        elif predict_from_cached_fit and fit is None:
             lgbm = load(
                 f"/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_{cache_model_name}.joblib"
             )
         else:
             raise ValueError(
                 "Either define only lgbm_fit or set predict_from_cached_fit to True"
-            )  # noqa
+            ) # noqa
 
         # Use same features used for fitting loaded model
         feature_set = lgbm.feature_name_
@@ -282,7 +282,3 @@ class LGBM:
             preds_proba = [p[1] for p in preds_proba2]
 
         return preds, preds_proba
-
-    # def explain(
-    #     self, df, explain_from_cached_fit=True, lgbm_fit=None, reduce_df_mem=True
-    # ):

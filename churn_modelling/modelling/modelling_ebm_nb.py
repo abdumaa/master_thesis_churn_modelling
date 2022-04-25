@@ -2,14 +2,8 @@ import pandas as pd
 import numpy as np
 import ast
 import glob
-from datetime import datetime
 from joblib import dump, load
-from sklearn.model_selection import RandomizedSearchCV, cross_validate
-from scipy.special import expit
-from scipy.stats import randint as sp_randint
-from scipy.stats import uniform as sp_uniform
 import seaborn as sns
-# import scikitplot as skplt
 import matplotlib.pyplot as plt
 
 from interpret.glassbox import ExplainableBoostingClassifier
@@ -17,144 +11,98 @@ from interpret import show
 
 from sklearn.inspection import PartialDependenceDisplay
 from sklearn.metrics import (
-    make_scorer,
     precision_score,
     recall_score,
     accuracy_score,
-    confusion_matrix,
+    f1_score,
+    roc_auc_score,
     average_precision_score,
 )
 
-from churn_modelling.preprocessing.categorical import to_categorical
-from churn_modelling.preprocessing.mrmr import mrmr, _lgbm_scorer
-from churn_modelling.preprocessing.resample import resample
-from churn_modelling.preprocessing.splitting import split_train_test
-from churn_modelling.modelling.custom_loss import FocalLoss, WeightedLoss
 from churn_modelling.modelling.ebm import EBM
-from churn_modelling.utils.mem_usage import reduce_mem_usage
-from churn_modelling.preprocessing.mrmr import _correlation_scorer
+
+models = [
+    'ebm_none_best_quot',
+    'ebm_none_no_quot',
+    'ebm_down1_best_quot',
+    'ebm_down1_no_quot',
+    'ebm_down2_best_quot',
+    'ebm_down2_no_quot',
+    'ebm_down3_best_quot',
+    'ebm_down3_no_quot',
+    'ebm_up1_best_quot',
+    'ebm_up1_no_quot',
+    'ebm_up2_best_quot',
+    'ebm_up2_no_quot',
+    'ebm_up3_best_quot',
+    'ebm_up3_no_quot',
+    'ebm_smote_best_quot',
+    'ebm_smote_no_quot',
+]
 
 # Load data
-df_temp = pd.read_csv('../data/toydata_trainval.csv', index_col=0)
-df = df_temp.copy()
+df_train = pd.read_csv('../data/toydata_trainval.csv', index_col=0)
+df_oos = pd.read_csv('../data/toydata_oos.csv', index_col=0)
+df_oop = pd.read_csv('../data/toydata_oop.csv', index_col=0)
 
 # Load EBM
-model_ebm = EBM(df=df, target="churn", test_size=0.1)
+class_ebm = EBM(df=df_train, target="churn", test_size=0.1)
 
-# Train Test Split
-df_train, df_test = model_ebm.create_train_test()
-
-# Downsample Training Set
-X_us, y_us = model_ebm.create_sampling(df_to_sample=df, sampling="smote", frac="balanced")
-
-# Split features into quotation and fix_features
-quot_feats, fix_feats = model_ebm.split_quotation_fix_features()
-
-# MRMR
-iterations_df = model_ebm.feature_selection(
-    df_to_dimreduce=df_train,
-    variable_names=quot_feats,
-    cv=5,
-)
-model_ebm.visualize_feature_selection(iterations_df)
-
-# Dimension reduction
-#feature_set = ast.literal_eval(iterations_df["SELECTED_SET"][20])
-fix_feats.extend([
-    "storno",
-    "n_requests_1",
-    "diff_avg_vjnbe_requests_3",
-    "diff_n_requests_3",
-    "other_hsntsn_requests_3",
-])
-df_train = df_train[fix_feats]
-df_test = df_test[fix_feats]
-
-
-### EBM
-hp_fix_dict = {
-    "validation_size": 0.1111,
-    "early_stopping_rounds": 30,
-    "early_stopping_tolerance": 1e-4,
-    "max_rounds": 5000,
-}
-hp_tune_dict = {
-    "interactions": sp_randint(5, 10),
-    "outer_bags": sp_randint(20, 30),
-    "inner_bags": sp_randint(20, 30),
-    "learning_rate": sp_uniform(loc=0.009, scale=0.006),
-    "min_samples_leaf": sp_randint(2, 10),
-    "max_leaves": sp_randint(2, 5),
-}
-rscv_params = {
-    "n_iter": 100,
-    "random_state": 43,
-    "n_jobs": -1,
-    "cv": 3,
-    "verbose": 100,
-}
-
-seed = 12
-
-ebm = model_ebm.fit_ebm(
-    df_train=df_train,
-    hp_fix_dict=hp_fix_dict,
-    hp_tune_dict=hp_tune_dict,
-    rscv_params=rscv_params,
-    seed=seed,
+# Load fitted Model
+ebm_fit = load(
+    "/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/ebm_fits/ebm_fit_ebm_down2_best_quot.joblib"
 )
 
-# ebm = ExplainableBoostingClassifier(
-#     interactions=10,
-#     outer_bags=25, # default=8
-#     inner_bags=25, # default=0
-#     learning_rate=0.01,
-#     validation_size=0.1111,
-#     early_stopping_rounds=30,
-#     early_stopping_tolerance=1e-4,
-#     max_rounds=5000,
-#     min_samples_leaf=2,
-#     max_leaves=3,
-#     n_jobs=-1,
-#     random_state=seed,
-# )
+# Extract feature set used for modelling
+single_feats, interaction_feats = class_ebm.get_featureset_from_fit(
+    ebm_fit,
+    include_target=False,
+    include_interactions=True
+)
 
-y_train = df_train["storno"]
-X_train = df_train.drop(["storno"], axis=1)
-
-ebm_fit = ebm.fit(X_train, y_train)
+# Split y and X
+y_train = df_train["churn"]
+X_train = df_train.drop(["churn"], axis=1)[single_feats]
+y_oos = df_oos["churn"]
+X_oos = df_oos.drop(["churn"], axis=1)[single_feats]
+y_oop = df_oop["churn"]
+X_oop = df_oop.drop(["churn"], axis=1)[single_feats]
 
 ### Predict
-y_true = df_test["storno"]
-X_test = df_test.drop(["storno"], axis=1)
-
-preds = ebm_fit.predict(X_test)
-
+preds_oos = ebm_fit.predict(X_oos)
+preds_oop = ebm_fit.predict(X_oop)
 
 ### Evaluation
-acc = accuracy_score(y_true, preds)  # 0.9915 / 0.9905
-prec = precision_score(y_true, preds)  # 0.8462 / 0.7333 TP/(TP + FP)
-rec = recall_score(y_true, preds)  # 0.2136 / 0.1078 TP/(TP + FN)
-confusion_matrix(y_true, preds)
+# OOS
+acc_oos = accuracy_score(y_oos, preds_oos)
+prec_oos = precision_score(y_oos, preds_oos)
+rec_oos = recall_score(y_oos, preds_oos)
+f1_oos = f1_score(y_oos, preds_oos)
+auroc_oos = roc_auc_score(y_oos, preds_oos)
+auprc_oos = average_precision_score(y_oos, preds_oos)
+
+# OOP
+acc_oop = accuracy_score(y_oop, preds_oop)
+prec_oop = precision_score(y_oop, preds_oop)
+rec_oop = recall_score(y_oop, preds_oop)
+f1_oop = f1_score(y_oop, preds_oop)
+auroc_oop = roc_auc_score(y_oop, preds_oop)
+auprc_oop = average_precision_score(y_oop, preds_oop)
 
 ### Explanations
-ebm_global = ebm.explain_global()
+ebm_global = ebm_fit.explain_global()
 show(ebm_global)
 
 
-### Save Model
-time = datetime.now().strftime("%y%m%d%H%M%S")
-dump(
-    ebm_fit,
-    f"/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/ebm_fits/ebm_fit_{time}.joblib",  # find solution for that # noqa
-)
-
-### Load Model
-list_of_fits = glob.glob(
-    "/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/ebm_fits/*"  # find solution for that # noqa
-)
-latest_file = max(list_of_fits, key=os.path.getctime)
-last_part = latest_file.rsplit("ebm_fit_", 1)[1]
-ebm_fit_new = load(latest_file)
-
-preds = ebm_fit_new.predict(X_test)
+idx = ebm_global.selector.index[ebm_global.selector['Name'] == 'diff_avg_vjnbe_requests_3 x n_accident'][0]
+data_dict = ebm_global.data(idx)
+fig = ebm_global.visualize(0)
+fig.write_image("test.png")
+x_vals = data_dict["names"].copy()
+y_vals = data_dict["scores"].copy()
+y_vals = np.r_[y_vals, y_vals[np.newaxis, -1]]
+x = np.array(x_vals)
+sns.lineplot(x,y_vals, drawstyle='steps-post')
+plt.xlabel('n_requests_1')
+plt.ylabel('$\mathregular{k_{1}}$(n_requests_1)')
+plt.savefig('../../tex/images/ebm_nrequests.png')

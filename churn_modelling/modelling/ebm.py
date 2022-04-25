@@ -133,18 +133,25 @@ class EBM:
 
         return best_feats
 
-    def get_featureset_from_latest_run(self, include_target=True):
-        """Select feature set based on set of latest run."""
-        list_of_fits = glob.glob(
-            "/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/*"  # find solution for that # noqa
-        )
-        latest_file = max(list_of_fits, key=os.path.getctime)
+    def get_featureset_from_fit(self, fit, include_target=True, include_interactions=False):
+        """Extract feature set based on specific fit."""
 
-        lgbm_laod = load(latest_file)
-        feature_set = lgbm_laod.feature_name_
-        feature_set.append(self.target)
+        features_used = fit.feature_names
+        single_features = []
+        interaction_features = []
+        for f in features_used:
+            if ' x ' in f:
+                interaction_features.append(f)
+            else:
+                single_features.append(f)
 
-        return feature_set
+        if include_target:
+            single_features.append(self.target)
+
+        if include_interactions:
+            return single_features, interaction_features
+        else:
+            return single_features
 
     def fit_ebm(
         self,
@@ -156,10 +163,11 @@ class EBM:
         feature_set=None,
         reduce_df_mem=True,
         save_model=True,
-        # learning_rate_decay=True,
+        cache_model_name=None,
     ):
         """Run through the entire EBM modelling pipeline."""
         # Select specific features from df_train for modelling
+        print("..1: Small preprocessing")
         if feature_set is not None:
             df_train = df_train[feature_set]
             df_val = df_val[feature_set]
@@ -175,68 +183,49 @@ class EBM:
         y_train = df_train[self.target]
         X_train = df_train.drop([self.target], axis=1)
 
-        # Define Learning Rate decay and insert into hp_eval_dict
-        # if learning_rate_decay:
-
-        #     def learn_rate_decay(current_iter, base=0.1, decay_factor=0.99):
-        #         """Define learning decay shrinkage for better and faster convergence."""
-        #         base_learning_rate = base
-        #         lr = base_learning_rate * np.power(decay_factor, current_iter)
-        #         return lr if lr > 1e-3 else 1e-3
-
-        #     if "callbacks" in hp_eval_dict:
-        #         hp_eval_dict["callbacks"].append(
-        #             lgb.reset_parameter(learning_rate=learn_rate_decay)
-        #         )
-        #     else:
-        #         hp_eval_dict["callbacks"] = [
-        #             lgb.reset_parameter(learning_rate=learn_rate_decay)
-        #         ]
-
         # Call Classifier and HP-Tuner and fit
+        print("..2: Start CV-HP-Tuning")
         ebm = ExplainableBoostingClassifier(n_jobs=-1, random_state=seed, **hp_fix_dict)
         ebm_rscv = RandomizedSearchCV(
             estimator=ebm, param_distributions=hp_tune_dict, **rscv_params,
         )
         ebm_fit = ebm_rscv.fit(X_train, y_train)
 
-        print(
-            "Best score reached: {} with params: {} ".format(
-                ebm_fit.best_score_, ebm_fit.best_params_
-            )
-        )
+        print("..3: Finished CV-HP-Tuning")
+        # print(
+        #     "Best score reached: {} with params: {} ".format(
+        #         ebm_fit.best_score_, ebm_fit.best_params_
+        #     )
+        # )
 
         # Save model
         if save_model:
-            time = datetime.now().strftime("%y%m%d%H%M%S")
+            print("..4: Save best model")
             dump(
                 ebm_fit.best_estimator_,
-                f"/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/ebm_fits/ebm_fit_{time}.joblib",  # find solution for that # noqa
+                f"/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/ebm_fits/ebm_fit_{cache_model_name}.joblib",  # find solution for that # noqa
             )
 
         return ebm_fit.best_estimator_
 
     def predict(
-        self, X, predict_from_latest_fit=True, ebm_fit=None, reduce_df_mem=True
+        self, X, predict_from_cached_fit=True, fit=None, cache_model_name=None, reduce_df_mem=True
     ):
         """Predict for X Churn probabibilities."""
         # Load model or use passed fit
-        if ebm_fit is not None and not predict_from_latest_fit:
-            ebm = ebm_fit
-        elif predict_from_latest_fit and ebm_fit is None:
-            list_of_fits = glob.glob(
-                "/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/ebm_fits/*"  # find solution for that # noqa
+        if fit is not None and not predict_from_cached_fit:
+            ebm = fit
+        elif predict_from_cached_fit and fit is None:
+            ebm = load(
+                f"/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/ebm_fits/ebm_fit_{cache_model_name}.joblib"  # find solution for that # noqa
             )
-            latest_file = max(list_of_fits, key=os.path.getctime)
-            last_part = latest_file.rsplit("ebm_fit_", 1)[1]
-            ebm = load(latest_file)
         else:
             raise ValueError(
-                "Either define only ebm_fit or set predict_from_latest_fit to True"
+                "Either define only ebm_fit or set predict_from_cached_fit to True"
             )  # noqa
 
         # Use same features used for fitting loaded model
-        feature_set = ebm.feature_name_
+        feature_set = self.get_featureset_from_fit(ebm, include_target=False)
         X = X[feature_set]
 
         # Small preprocessing
@@ -250,7 +239,3 @@ class EBM:
         preds_proba = [p[1] for p in preds_proba2]
 
         return preds, preds_proba
-
-    # def explain(
-    #     self, df, explain_from_latest_fit=True, lgbm_fit=None, reduce_df_mem=True
-    # ):
