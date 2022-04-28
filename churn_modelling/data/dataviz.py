@@ -19,26 +19,29 @@ df_oop = pd.read_csv('toydata_oop.csv', index_col=0)
 df_oos = pd.read_csv('toydata_oos.csv', index_col=0)
 
 ### EDA Plots
-# Set up figure
-fig = plt.figure(figsize = (20,25))
-
 # Violinplots
-nbin_var = df[['n_requests_1', 'n_requests_2', 'n_requests_3',
+nbin_var1 = df[['n_requests_1', 'n_requests_2', 'n_requests_3',
        'diff_n_requests_1', 'diff_n_requests_2', 'diff_n_requests_3',
        'diff_avg_vjnbe_requests_1', 'diff_avg_vjnbe_requests_2',
        'diff_avg_vjnbe_requests_3', 'other_hsntsn_requests_1',
-       'other_hsntsn_requests_2', 'other_hsntsn_requests_3', 'n_accident',
-       'sum_accident_cost', 'vehicle_age', 'diff_car_holder',
+       'other_hsntsn_requests_2', 'other_hsntsn_requests_3']]
+nbin_var2 = df[['n_accident', 'sum_accident_cost', 'vehicle_age', 'diff_car_holder',
        'contract_age_months', 'age_contract_holder', 'age_youngest_driver',
        'years_driving_license']]
-for i, v in enumerate(nbin_var):
-    axes = fig.add_subplot(6, 4, i+1)
+fig = plt.figure(figsize = (20,28))
+for i, v in enumerate(nbin_var1):
+    axes = fig.add_subplot(4, 3, i+1)
     b = sns.violinplot(x='churn', y=v, data=df, ax=axes)
     b.set_xlabel("Churn", fontsize=12)
     b.set_ylabel(v, fontsize=12)
-
-# Save fig
-fig.savefig('../../tex/images/violin.png', dpi=300, bbox_inches="tight")
+fig.savefig('../../tex/images/violin1.png', dpi=100, bbox_inches="tight")
+fig = plt.figure(figsize = (20,20))
+for i, v in enumerate(nbin_var2):
+    axes = fig.add_subplot(3, 3, i+1)
+    b = sns.violinplot(x='churn', y=v, data=df, ax=axes)
+    b.set_xlabel("Churn", fontsize=12)
+    b.set_ylabel(v, fontsize=12)
+fig.savefig('../../tex/images/violin2.png', dpi=100, bbox_inches="tight")
 
 
 # Quick stats
