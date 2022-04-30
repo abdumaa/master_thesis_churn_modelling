@@ -88,3 +88,30 @@ ax.yaxis.set_ticklabels(['False','True'])
 # Save the visualization of the Confusion Matrix.
 sns_plot = ax.get_figure()
 sns_plot.savefig('../../tex/images/conf_b2_oop.png', bbox_inches='tight')
+
+
+### Loss functions
+# 100 linearly spaced numbers
+x = np.linspace(0,1,100)
+
+# the function, which is y = sin(x) here
+y = -np.log(x)
+
+# setting the axes at the centre
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
+ax.title.set_text('Simple Weighted Log-Loss for $\mathregular{{C}_{i}}$=1')
+ax.set(xlabel='$\mathregular{\hat{C}_{i}}$', ylabel='Log-Loss')
+ax.xaxis.set_ticks_position('bottom')
+ax.yaxis.set_ticks_position('left')
+
+# plot the functions
+plt.plot(x,0.1*y, 'b', label='$\mathregular{\\alpha}$=0.1')
+plt.plot(x,0.5*y, 'g', label='$\mathregular{\\alpha}$=0.5')
+plt.plot(x,0.9*y, 'r', label='$\mathregular{\\alpha}$=0.9')
+
+plt.legend(loc='upper right')
+
+# show the plot
+# plt.show()
+plt.savefig('../../tex/images/weighted_loss.png', dpi=200, bbox_inches="tight")

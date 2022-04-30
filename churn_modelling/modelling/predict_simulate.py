@@ -11,8 +11,9 @@ from sklearn.metrics import (
     recall_score,
     f1_score,
 )
-from ebm import EBM
-from lgbm import LGBM
+from churn_modelling.modelling.ebm import EBM
+from churn_modelling.modelling.lgbm import LGBM
+
 
 
 # Best models of each modelling approach
@@ -31,13 +32,13 @@ def create_prec_rec_plot(model_folder, cache_model_name, save=True, save_folder_
     y_test = df_test["churn"]
 
     # Load model
-    if cache_model_name[:3] == 'gbt':
-        model_pl = LGBM(df=df_test, target="churn")
+    if cache_model_name[:3] == 'lgb':
+        model_pl = LGBM()
     elif cache_model_name[:3] == 'ebm':
-        model_pl = EBM(df=df_test, target="churn")
+        model_pl = EBM()
     else:
         ValueError(
-            f"{cache_model_name} should either start with 'gbt' or with 'ebm'"
+            f"{cache_model_name} should either start with 'lgb' or with 'ebm'"
         )
 
     # Create predictions
@@ -74,13 +75,6 @@ def create_prec_rec_plot(model_folder, cache_model_name, save=True, save_folder_
     if save:
         plt.savefig(f"{save_folder_path}{cache_model_name[:3]}_prec_rec_plot.png", dpi=200, bbox_inches='tight')
 
-create_prec_rec_plot(
-    model_folder='modelling',
-    cache_model_name='gbt_up1_best_quot_aNone_gNone',
-    save_folder_path='../../tex/images/',
-)
-
-
 
 def create_profit_simulation_plot(model_folder, cache_model_name, p_succ=0.9, NPV=100, NLV=10, K_RS=2, save=True, save_folder_path=''):
     """Plot Profit Increase of model for different cutoffs."""
@@ -91,13 +85,13 @@ def create_profit_simulation_plot(model_folder, cache_model_name, p_succ=0.9, NP
     y_test = df_test["churn"]
 
     # Load model
-    if cache_model_name[:3] == 'gbt':
-        model_pl = LGBM(df=df_test, target="churn")
+    if cache_model_name[:3] == 'lgb':
+        model_pl = LGBM()
     elif cache_model_name[:3] == 'ebm':
-        model_pl = EBM(df=df_test, target="churn")
+        model_pl = EBM()
     else:
         ValueError(
-            f"{cache_model_name} should either start with 'gbt' or with 'ebm'"
+            f"{cache_model_name} should either start with 'lgb' or with 'ebm'"
         )
 
     # Create predictions
@@ -108,7 +102,7 @@ def create_profit_simulation_plot(model_folder, cache_model_name, p_succ=0.9, NP
     )
 
     # Simulate Precision and number of predicted churns for tau space in [0, 1]
-    tau_space = np.linspace(0.2, 1, 801)
+    tau_space = np.linspace(0.1, 1, 901)
     prec = np.empty_like(tau_space, dtype=float)
     n_churn = np.empty_like(tau_space, dtype=int)
     del_profit = np.empty_like(tau_space, dtype=float)
@@ -138,11 +132,3 @@ def create_profit_simulation_plot(model_folder, cache_model_name, p_succ=0.9, NP
     plt.text(x=tau_opt+0.01, y=profit_opt+80, s='$\mathregular{\u03C4^{*}=}$'+f"{tau_opt}\n"+'$\mathregular{\Delta \Pi^{*}=}$'+f"{round(profit_opt,1)}")
     if save:
         plt.savefig(f"{save_folder_path}{cache_model_name[:3]}_prof_increase_plot.png", dpi=200, bbox_inches='tight')
-
-
-create_profit_simulation_plot(
-    model_folder='modelling',
-    cache_model_name='gbt_up1_best_quot_aNone_gNone',
-    save_folder_path='../../tex/images/',
-)
-

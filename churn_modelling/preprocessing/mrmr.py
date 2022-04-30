@@ -177,12 +177,14 @@ def _correlation_scorer(df):
     return df_corr
 
 
-def mrmr(df_to_dimreduce, target, cv=5, sample=False):
+def mrmr(df_to_dimreduce, variable_names=None, target="churn", cv=5):
     """Iterate over entire feature set to get all possible best subsets."""
 
-    # Create sample
-    if sample:
-        df_to_dimreduce = df_to_dimreduce
+    # Select variables to reduce dimension from
+    if variable_names is not None:
+        variable_names.append(target)
+        df_to_dimreduce = df_to_dimreduce[variable_names].copy()
+
     # Create Correlation Matrix
     print("------------------ COMPUTE CORRELATION MATRIX")
     df_corr = _correlation_scorer(df_to_dimreduce)

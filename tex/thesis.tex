@@ -27,6 +27,7 @@
 \usepackage{subcaption}
 \usepackage{algpseudocode}
 \usepackage{algorithm}
+\usepackage{relsize}
 \DeclareCaptionType{equ}[][]
 \usepackage[style=numeric]{biblatex}
 \addbibresource{literaturechurn.bib}
@@ -129,11 +130,11 @@ The popularity of (deep) neural networks has risen enormously in the last two de
 The different data preparation, preprocessing and variable engineering approaches for churn modelling are also extensively studied. \cite{coussement} for example studies the data preparation approach for modelling churn probabilities in the telecommunication industry. They suggest that an appropriate selection and engineering of variables is essential to guarantee robust results and high accuracy. We apply their suggestion to some of our variables, which however differ due to the different setting. \\
 Regarding preprocessing, Gattermann-Itschert et al. \cite{multiplets} underline the importance of multi-slicing. This technique essantially uses multiple time-slices $T$ in the past to train the underlying models. They find out that this technique results in higher accuracy and robustness, which also holds true for our application. \\
 As already stated, class imbalance naturally occurs in most churn prediction applications due to the fact that churners are less frequent than non-churners. This problematic increases in a contract setting, where there are only a few events which allow for an earlier termination than the due date. Weiss et al. \cite{mining_rarity} provides an overview on multiple techniques to handle class-imbalance. It espacially highlights the effectiveness of sampling and cost-sensitive learning which prove to be the best techniques in our application as well. \\
-Zhu et al. \cite{zhu} offers a useful guideline of sampling methods in the context of churn prediction. It compares different sampling techniques in their effectiveness and multiple evaluation metrics. Burez et al. \cite{burez} extensively underlines the importance of using appropriate evaluation metrics in a churn prediciton context. This not only increases the success of churn prediction models in practical settings. It also provides trustworthy metrics in order to make models more comparable. \\
+Zhu et al. \cite{zhu} offers a useful guideline of sampling methods in the context of churn prediction. It compares different sampling techniques in their effectiveness and multiple evaluation metrics. Burez et al. \cite{burez} extensively underlines the importance of using appropriate evaluation metrics in a churn prediction context. This not only increases the success of churn prediction models in practical settings. It also provides trustworthy metrics in order to make models more comparable. \\
 It is important to note that in the applications of predictive analytics, two different evaluation approaches exist. Out-of-sample evaluation uses unseen samples from the same period(s) the model was trained on. Out-of-period evaluation tests the model on samples from a more recent period, which was not used for training. While out-of-sample evaluation is more dominant in the literature, Zahavi et al. \cite{zahavi} and Neslin et al. \cite{neslin} emphasize the importance of evaluating the performance of the model on periods beyond the ones it is trained on. \\
 Out-of-period evaluation is espacially important when there are time varying factors which influence the churn rate. Examples of such factors are demand, supply, competition, inflation and pricing. Espacially in our use case with automobile liability insurance, products of competitors are close substitutes. So any change in the stated factors has high effects on customer behavior. This undermines the relevance of using multiple time slices for training and out-of-period evaluation. \\
 A few research groups have focused on the choice of appropriate explanatory variables in the context of churn prediction. More specifically, there has been work done in the direction of using customer behavior to predict churn probabilities. Khodabandehlou et al. \cite{khodabandehlou} applies multiple variables reflecting the behavior of customers in a grocery store setting. It also compares different models and highlights the importance of including such variables in production as they help ensuring high accuracy. These variables however focus on the buying and returning behavior under different discounts offered. \\
-Calzada-Infante et al. \cite{calzada} examines social-network behavior of customers in the telecommunication industry and their predictive power for churn probabilities. The researchers propose a novel tree-based modelling technique called similarity forests, which relies on social network analysis methods. Their work verifies that the behavior of customers, in their case social relationships, has significant predictive power. Zhang et al. \cite{zhang} solely examines one class of behavioral data to predict telecommunication churn predicition, purposely excluding all other relevant variables. It focuses on variables generated with customer service data and also provides evidence for the importance of behavioral data. \\
+Calzada-Infante et al. \cite{calzada} examines social-network behavior of customers in the telecommunication industry and their predictive power for churn probabilities. The researchers propose a novel tree-based modelling technique called similarity forests, which relies on social network analysis methods. Their work verifies that the behavior of customers, in their case social relationships, has significant predictive power. Zhang et al. \cite{zhang} solely examines one class of behavioral data to predict telecommunication churn prediction, purposely excluding all other relevant variables. It focuses on variables generated with customer service data and also provides evidence for the importance of behavioral data. \\
 Moertini et al. \cite{moertini} conducts research on supplier churn on e-commerce platforms while using quotation data. The hypothesis the researchers prove to bo correct is that the frequency of supplier activities has high predictive power regarding their tendency to churn. They find out that the relationship in this B2C setting is negative, a low frequency of supplier activity goes along with a higher probability of a churn. \\
 However none of the above and to our best knowledge no other papers focus on using quotation data reflecting recent behavior of customers to predict churn probabilities. While \cite{khodabandehlou}, \cite{calzada} and \cite{zhang} all use customer-specific behavioral data, they all use different approaches of refelcting behavior. Also, their approach does not allow for monitoring individual recent changes in the behavior of customers and its impact on the churn probability. This turns out to be crucial for modelling churn using quotation data. In \cite{moertini} the type of data used is the nearest to our, the researchers however apply it to supplier churn prediction. \\
 The novelty of this work is also reflected in the fact that while evaluating the models, we not only consider evaluation metrics on hold-out sets. We also use modern explainability approaches and compare their ability to represent relationships of explanatory variables with the target variable. With the lately rising necessaty of interpretability we want to shed light on our modelling approaches to understand the driving forces which lead to high (or low) probabilities of churn. \\
@@ -141,7 +142,7 @@ The novelty of this work is also reflected in the fact that while evaluating the
 
 \section{Methods} \par
 
-In this section we present our methods and approaches utilized to build a churn predicition model. To fully capture the concepts we use in this work, we start with the data preparation. Then we explain and compare methods to handle imbalanced classes. The next subsection introduces the theoretical and mathematical background behind the utelized machine learning models. Questions on how to properly evaluate these models with the appropriate metrics and how to make them interpretable are answered in the last two subsections. \\
+In this section we present our methods and approaches utilized to build a churn prediction model. To fully capture the concepts we use in this work, we start with the data preparation. Then we explain and compare methods to handle imbalanced classes. The next subsection introduces the theoretical and mathematical background behind the utelized machine learning models. Questions on how to properly evaluate these models with the appropriate metrics and how to make them interpretable are answered in the last two subsections. \\
 
 \subsection{Data Preparation} \par
 \label{chap:dataprep}
@@ -162,7 +163,7 @@ The 12 points in time are selected carefully, in a sense that there is no overla
 The final step for generating a historized view of the contracts is to create a union on all 12 subviews, creating a panel-dataset. The number of resulting rows after this operation equals the number of rows after all next steps. So we have already generated the framework of the prepared table. The only thing which is left is to generate more variables, espacially accident and quotation variables. \\
 
 \subsubsection*{(ii) Join accident data}
-In many modelling problems in the insurance context it turns out that the driving behavior of the customer plays a big role in predicting the desired outcome. Espacially in risk modelling, knowing how many times a customer was involved in an accident or how costly these accidents were, ensures good predicitions. \\
+In many modelling problems in the insurance context it turns out that the driving behavior of the customer plays a big role in predicting the desired outcome. Espacially in risk modelling, knowing how many times a customer was involved in an accident or how costly these accidents were, ensures good predictions. \\
 Being involved in an accident is one of the events which give a customer the exceptional right of terminating the contract. Therefore we also include historized accident data to generate explanatory accident variables. The VTST containing the historized accidents are recorded for each "contract\_number", which makes it easy to join the data to the table generated in (i). \\
 We engineer two new variables based on the accident data. One is a simple count of accident the contract holder was involved in since the start of the contract ("n\_accident"). The second one is the sum over the incurred costs corresponding to the accidents ("sum\_accident\_cost"). This quantifies the accidents and makes them comparable. \\
 
@@ -290,7 +291,7 @@ Redundancy is then calculated by the mean of the relationship scores as follows:
 \vspace{5mm}
 \noindent
 \begin{equation} \label{redundancy}
-    red(variable_{i \in U}, variables \in S) = \frac{1}{n(S)} \sum_{s=1}^{n(S)} relationship(i, s)
+    red(variable_{i \in U}, variables \in S) = \frac{1}{n(S)} \mathlarger{\sum}_{s=1}^{n(S)} relationship(i, s)
 \end{equation}
 \vspace{1mm}
 
@@ -321,9 +322,9 @@ As the type of dimension reduction is part of the S-HPTL, we use two different s
 
 \subsection{Handling Class Imbalance} \par
 
-Studying the rarity of an event in the context of machine learning has become an important challange in the recent two decades. Rare events, such as a customer churning in the next period, are much harder to identify and learn for most of the models. HaiYing Wang et al. \cite{convergence_rareevents} study the convergence rate and distributaional properties of a Maximum-Likelihood estimator for the parameters of a logistic regression while prediciting rare events. Their finding is that the convergence rate of the MLE is equal to the inverse of the number of samples in the minority class rather then the overall size of the training data set. So the accuracy of the estimates for the parameters is limited to the available information on the minority class, even if the size of the dataset is massive. \\
+Studying the rarity of an event in the context of machine learning has become an important challange in the recent two decades. Rare events, such as a customer churning in the next period, are much harder to identify and learn for most of the models. HaiYing Wang et al. \cite{convergence_rareevents} study the convergence rate and distributaional properties of a Maximum-Likelihood estimator for the parameters of a logistic regression while predicting rare events. Their finding is that the convergence rate of the MLE is equal to the inverse of the number of samples in the minority class rather then the overall size of the training data set. So the accuracy of the estimates for the parameters is limited to the available information on the minority class, even if the size of the dataset is massive. \\
 Therefore some methods have been developed to decrease the problematic of imballanced classes. In this chapter we present different methods which can be applied to the training set, before feeding it to the model. Also, we present different objective loss functions which also aim in solving the problematic. To handle and evaluate the outcomes
-of prediciting rare events also the appropriate models and model evaluation metrics must be chosen. This is discussed in the next two subsections however. \\
+of predicting rare events also the appropriate models and model evaluation metrics must be chosen. This is discussed in the next two subsections however. \\
 
 \subsubsection*{(i) Downsampling}
 
@@ -363,7 +364,7 @@ The second approach is called "Focal Loss Function" and was originally designed 
 \vspace{6mm}
 
 \noindent
-To conclude we presented 3 sampling methods and two cost-sensitive loss functions. For our S-HPTL, we allow for a combination both sampling and cost-sensitive learning at the same time, as they do not exclude each other. \\
+To conclude we present 3 sampling methods and two cost-sensitive loss functions. For our S-HPTL, we allow for a combination of both sampling and cost-sensitive learning at the same time, as they do not exclude each other. \\
 
 
 \subsection{Machine Learning Models} \par
@@ -422,8 +423,8 @@ To describe this term as a loss function it is characterized by the negative log
 \caption{\textbf{Log Loss Function}}
 \begin{equation} \label{logistic_log_MLE}
     \begin{aligned}
-        l(C; X, \beta) & = -\sum_{i=1}^{N^{train}}C_{i}\log\big(P(C_{i}=1\mid X_{i})\big) + (1 - C_{i})\log\big(1 - P(C_{i}=1\mid  X_{i})\big) \\
-        & = -\sum_{i=1}^{N^{train}}C_{i}\log(\hat{C}_{i}) + (1 - C_{i})\log(1 - \hat{C}_{i}) \\
+        l(C; X, \beta) & = -\mathlarger{\sum}_{i=1}^{N^{train}}C_{i}\log\big(P(C_{i}=1\mid X_{i})\big) + (1 - C_{i})\log\big(1 - P(C_{i}=1\mid  X_{i})\big) \\
+        & = -\mathlarger{\sum}_{i=1}^{N^{train}}C_{i}\log(\hat{C}_{i}) + (1 - C_{i})\log(1 - \hat{C}_{i}) \\
     \end{aligned}
 \end{equation}
 \end{equ}
@@ -438,31 +439,28 @@ As already mentioned in chapter \ref{Cost-Sensitive Classifiers}, one technique 
 \begin{equ}[!ht]
 \caption{\textbf{Simple Weighted Loss Function}}
 \begin{equation} \label{loss_fct_wl}
-    l(C, \hat{C}) = -\sum_{i=1}^{N^{train}}\alpha C_{i}\log(\hat{C}_{i}) + (1-\alpha)(1 - C_{i})\log(1 - \hat{C}_{i})
+    l(C, \hat{C}) = -\mathlarger{\sum}_{i=1}^{N^{train}}\alpha C_{i}\log(\hat{C}_{i}) + (1-\alpha)(1 - C_{i})\log(1 - \hat{C}_{i})
 \end{equation}
 \end{equ}
 \vspace{1mm}
 
 \noindent
 The additional parameter of $\alpha$ is a hyperparameters which can be tuned during S-HPTL. Following Gattermann Itschert et al. \cite{multiplets} approach, $\alpha$ can also be set by default to the inverse of the relative class frequency of the majority class in the training data. \\
-To provide further intuition behind the idea of using a weighted loss function we look at the individual loss for different values of $\alpha$. For $\alpha>0.5$ we reach the desired state of penalizing false-negative classifications more than false-positive ones. To see why this is the case it is best to look at the single log-loss for a positive sample. Positive samples in equation (\ref{loss_fct_wl}) can be seen as the insertion of $C_{i}=1$ which simplifies the individual loss to $-\alpha \log(\hat{C}_{i})$. When replacing $\alpha$ with $w_{1} \in \{1,5,10\}$ for example, with higher $w_{1}$ the loss is higher for every $\hat{C}_{i}$. This example is vizualized by following plot: \\
+To provide further intuition behind the idea of using a weighted loss function we look at the individual loss for different values of $\alpha$. For $\alpha>0.5$ we reach the desired state of penalizing false-negative classifications more than false-positive ones. To see why this is the case it is best to look at the single log-loss for a positive sample. Positive samples in equation (\ref{loss_fct_wl}) can be seen as the insertion of $C_{i}=1$ which simplifies the individual loss to $-\alpha \log(\hat{C}_{i})$. For higher $\alpha$, the loss gets higher for every $\hat{C}_{i}$. This example is vizualized by the following plot: \\
 \begin{figure}[H]
     \centerline{\includegraphics[height=8cm]{weighted_loss.png}}
 \end{figure}
 \noindent
-This can be done analogously for negative samples. The individual loss for $C_{i}=0$ simplifies to $-(1-\alpha)\log(1-\hat{C}_{i})$. We therefore see that for $\alpha>0.5$ the relative penalty for false-negative classifications is higher. \\
+This can be done analogously for negative samples. The individual loss for $C_{i}=0$ simplifies to $-(1-\alpha)\log(1-\hat{C}_{i})$. We therefore see that for $\alpha>0.5$ the relative penalty for false-negative classifications is higher than for false-positives. \\
 
-Going one step further and introducing one more adjustable parameter to the objective function we arrive at the "Focal Loss Function". It is structured like this:
-\vspace{5mm}
+Going one step further and introducing one more adjustable parameter to the objective function we arrive at the "Focal Loss Function". It is structured as in equation (\ref{loss_fct_fl}). \\
 \noindent
 \begin{equ}[!ht]
 \caption{\textbf{Focal Loss Function}}
 \begin{equation} \label{loss_fct_fl}
-    l(C, \hat{C}) = -\sum_{i=1}^{N^{train}}\alpha(1 - \hat{C}_{i})^{\gamma}C_{i}\log(\hat{C}_{i}) + (1 - \alpha)\hat{C}_{i}^{\gamma}(1 - C_{i})\log(1 - \hat{C}_{i})
+    l(C, \hat{C}) = -\mathlarger{\sum}_{i=1}^{N^{train}}\alpha(1 - \hat{C}_{i})^{\gamma}C_{i}\log(\hat{C}_{i}) + (1 - \alpha)\hat{C}_{i}^{\gamma}(1 - C_{i})\log(1 - \hat{C}_{i})
 \end{equation}
 \end{equ}
-\vspace{1mm}
-
 \noindent
 Again, $\alpha$ and $\gamma$ are hyperparamaters, which are tuned during S-HPTL. Note that for $\gamma=0$ (\ref{loss_fct_fl}) becomes a "Simple Weighted Loss Function". So the same intuition for varying weights $\alpha$ can be applied here. Also note that for $\gamma=0$ and $\alpha=0.5$ we are left with the original log-loss function derived in equation (\ref{logistic_log_MLE}) multiplied by $0.5$. \\
 To understand how $\gamma$ can be used to improve modelling, we again look at the single loss for a positive sample $C_{i}=1$. As $\gamma$ affects the loss for positive and negative classifications analogously, the same logic can be applied for $C_{i}=0$. Thereby we again plot the loss for different values for $\gamma$ and $\hat{C}_{i}$ and set $\alpha=0.5$. \\
@@ -486,7 +484,7 @@ Classification trees have a different approach on builing a prediction model for
 \begin{equ}[!ht]
 \begin{equation} \label{dec_tree}
     \begin{aligned}
-        \{j, r\} \in \argmin_{j, r} \sum_{i:X_{i}\in S_{1}(j, r)}L(C_{i}; X_{i}, \hat{p}_{k}) + \sum_{i:X_{i}\in S_{2}(j, r)}L(C_{i}; X_{i}, \hat{p}_{k}) \\
+        \{j, r\} \in \argmin_{j, r} \mathlarger{\sum}_{i:X_{i}\in S_{1}(j, r)}L(C_{i}; X_{i}, \hat{p}_{k}) + \mathlarger{\sum}_{i:X_{i}\in S_{2}(j, r)}L(C_{i}; X_{i}, \hat{p}_{k}) \\
         \text{with: }S_{1}(j, r) = \{X\mid X^{(j)}\geq r\} \text{, } S_{2}(j, r) = \{X\mid X^{(j)}< r\}
     \end{aligned}
 \end{equation}
@@ -494,7 +492,7 @@ Classification trees have a different approach on builing a prediction model for
 \vspace{1mm}
 
 \noindent
-The loss function for region $S_{k}$ is calculated using the resulting region prediction $\hat{p}_{k}$. This region predicition is applied to all obeservations which are assigned to it after the splits $i:X_{i}\in S_{k}$). In a classification setting the prediction simplifies to the shares of churns in $S_{k}$. The typical loss functions are based on evaluating the purity of the resulting regions. In the ideal case, one would like to find the splits in $X$ which always correctly assign contracts of the two classes into two different regions. In this case, $\hat{p}_{k}$ would always be either 1 or 0. In order to approach this case one either uses the Gini-index or the Cross-entropy for region $S_{k}$:
+The loss function for region $S_{k}$ is calculated using the resulting region prediction $\hat{p}_{k}$. This region prediction is applied to all obeservations which are assigned to it after the splits $i:X_{i}\in S_{k}$). In a classification setting the prediction simplifies to the shares of churns in $S_{k}$. The typical loss functions are based on evaluating the purity of the resulting regions. In the ideal case, one would like to find the splits in $X$ which always correctly assign contracts of the two classes into two different regions. In this case, $\hat{p}_{k}$ would always be either 1 or 0. In order to approach this case one either uses the Gini-index or the Cross-entropy for region $S_{k}$:
 \vspace{5mm}
 \begin{center}
     \begin{tabular}{ll}
@@ -519,12 +517,12 @@ The idea of boosted trees for classification is to have a sequence of dependent 
 \caption{GBT-Algortihm}\label{alg:boostedtrees}
 \begin{algorithmic}
     \State $\hat{G}(X) \gets 0$
-    \State $L \gets \sum_{i=1}^{N^{train}} l(C_{i}, f(\hat{G}(X_{i})))$
+    \State $L \gets \mathlarger{\sum}_{i=1}^{N^{train}} l(C_{i}, f(\hat{G}(X_{i})))$
     \For{b in range(1, B)}
-        \State Fit tree $\hat{g}_{b}(X)$ which minimizes $L = \sum_{i=1}^{N^{train}} l\Big(C_{i}, f\big(\hat{G}(X_{i}) + \hat{g}_{b}(X_{i})\big)\Big)$
+        \State Fit tree $\hat{g}_{b}(X)$ which minimizes $L = \mathlarger{\sum}_{i=1}^{N^{train}} l\Big(C_{i}, f\big(\hat{G}(X_{i}) + \hat{g}_{b}(X_{i})\big)\Big)$
         \State $\hat{G}(X) \gets \hat{G}(X) + \lambda\hat{g}_{b}(X)$
     \EndFor
-    \State $\hat{C} = \hat{f}(\hat{G}(X)) = f(\sum_{b=1}^{B}\lambda\hat{g}_{b}(X))$
+    \State $\hat{C} = \hat{f}(\hat{G}(X)) = f(\mathlarger{\sum}_{b=1}^{B}\lambda\hat{g}_{b}(X))$
 \end{algorithmic}
 \end{algorithm}
 \vspace{3mm}
@@ -587,7 +585,7 @@ Explainable boosting machines (EBM) were developed by researchers at Microsoft \
 \noindent
 \begin{equ}[H]
 \begin{equation} \label{gam}
-    g(X) = \beta_{0} + \sum_{j=1}^{M} k_{j}(X^{(j)}) + \epsilon \\
+    g(X) = \beta_{0} + \mathlarger{\sum}_{j=1}^{M} k_{j}(X^{(j)}) + \epsilon \\
 \end{equation}
 \end{equ}
 \vspace{1mm}
@@ -600,15 +598,19 @@ Unfortunetaly there is still a huge gap between standard GAM-models and full com
 \noindent
 \begin{equ}[H]
 \begin{equation} \label{ga2m}
-    g(X) = \beta_{0} + \sum k_{j}(X^{(j)}) + \sum k_{m,n}(X^{(m)},X^{(n)}) + \epsilon \\
+    g(X) = \beta_{0} + \mathlarger{\sum} k_{j}(X^{(j)}) + \mathlarger{\sum} k_{m,n}(X^{(m)},X^{(n)}) + \epsilon \\
 \end{equation}
 \end{equ}
 \vspace{1mm}
 
 \noindent
+We make use bagging, refered to as "inner bags" in the EBM package. At the time of improving the current loss with one individual variable or interaction it fits multiples trees on subsamples (drawn with replacement) from the training data. These trees are averaged out to create the final update of the iteration. This is proven to increase both predictive performance and interpretability of the shape functions.\\
+To further ensure both smoothness of the shape functions and reliable estimates, EBM makes use of an outer bagging process. We refer to the hyperparameter name of its package "outer bags". What it essentially does is it fits individual EBMs on different subsamples of the training data. The final shape functions are an average of the shape functions learned in each outer bag. \\
+
 There are a number of approaches to detect the best set of variable interactions for our model as in \cite{anova_interaction}, \cite{pdf_interaction}, \cite{guide}, \cite{grove}. These methods however are either computationally inefficient or almost even infeasible with high-dimensional data. Therefore we use the "FAST" approach by Lou et al. \cite{ga2m}, which are also available in the EBM-package. \\
 FAST's structure is based on a greedy forward stagewise selection strategy. It can be compared to the MRMR in a way that it starts with an empty set of selected pairs and an unselected set containing all possible variable pairs. In each iteration all possible unselected pairs are used seperately to fit the current objective loss function resulting from the additive model including only the already selected pairs. The pair with the highest loss improvement is selected in that iteration. The iteration stops, when the objective loss function stops improving for any other inclusion of a pair. \\
 If we assume that we have $M$ variables in our data the amount of possible pairwise interactions equals $\binom{M}{2} = \frac{M(M-1)}{2}$. As a result, calculating the set of interaction functions and fitting all possible new models in each iteration is very time consuming for large $M$. FAST therefore builds the interaction functions more efficiently by defining optimized quadrants in the space of the two variables and taking the mean values of each quadrant. \\
+The FAST algorithm is performed for each outer bag. Because there are so many interactions, we end up throwing away all but the top $I$ interactions, where k is the number of interactions specified by the modeller. Ranking of the interactions is made by adding the loss improvement of each interaction over all outer bags. \\
 
 EBM also offers hyperparameters to tune. Table \ref{hpebm} lists them and the value spaces used for finding the optimal hyperparameter set. \\
 \begin{table}[H]
@@ -624,8 +626,8 @@ EBM also offers hyperparameters to tune. Table \ref{hpebm} lists them and the va
     \multicolumn{1}{|l|}{}                                       & Min number of samples for new leaf   &      $\sim$ U(2, 5)       \\
     \hline
     \multicolumn{1}{|l|}{\multirow{3}{*}{Other}} & Number of interactions          &       $\sim$ U(5, 10)      \\
-    \multicolumn{1}{|l|}{}                                       & outer\_bags   &        $\sim$ U(20, 30)   \\
-    \multicolumn{1}{|l|}{}                                       & inner\_bags   &       $\sim$ U(20, 30)   \\
+    \multicolumn{1}{|l|}{}                                       & Number of Outer Bags   &        $\sim$ U(20, 30)   \\
+    \multicolumn{1}{|l|}{}                                       & Number of Inner Bags   &       $\sim$ U(20, 30)   \\
     \hline
     \end{tabular}
     \caption{Hyperparameter sets for M-HPTL - EBM}
@@ -712,7 +714,7 @@ The partial function $\hat{f}_{PD}(X^{(j)})$ for any variable $X^{(j)}$ is then 
 \noindent
 \begin{equ}[H]
 \begin{equation} \label{pdp}
-    \hat{f}_{PD}(X^{(j)}) = \frac{1}{N^{train}} \sum_{i=1}^{N^{train}} \hat{f}(X^{(j)}, X^{(-j)}_{i}) \\
+    \hat{f}_{PD}(X^{(j)}) = \frac{1}{N^{train}} \mathlarger{\sum}_{i=1}^{N^{train}} \hat{f}(X^{(j)}, X^{(-j)}_{i}) \\
 \end{equation}
 \end{equ}
 \vspace{1mm}
@@ -770,30 +772,7 @@ SHAP, developed by Lundberg et al. \cite{shap}, has a slightly different approac
 \noindent
 where $z\in \{0,1\}^{M}$ is a vector defining the coalition form, $M$ is the maximum coalition size and $\delta^{(j)}$ is the shapley value of variable $j$. The vector $z$ therefore serves as a collection of explanatory variables in the linear model and defines if variable $j$ is present in the coalition or not. So if we take the example from above, a vector $z=[1,0,1]$ would represent the coalition of $X^{(1)}_{i}=10$ and $X^{(3)}_{i}=5$. $g(z)$ would represent the model output for $X^{(2)}_{i}$ being drawn from the training data. \\
 Similarly to LIME, in the first step a synthetic dataset for the sample of interest is computed using different vectors $z$. The dataset then consists of the coalition vectors and their corresponding model estimates $g(z)$. Again, as we aim to minimize the variance of the shapley value estimates, for each coalition vector we sample $M$ times (unless $z$ is a vector of 1s). With this new dataset we try to fit the simple linear model in equation (\ref{shap}). The shapley values are the coefficients of the model which are typically estimated by kernel methods. \\
-The computation of SHAP can be summarized by this pseudo code: \\
 
-\begin{algorithm}
-\caption{SHAP-Algortihm}\label{alg:shap}
-\begin{algorithmic}
-    \State Select data point $X_{i}$ and corresponding prediction $\hat{C_{i}}$ of interest
-    \State Compute all $K = 2^k$ coalition vectors and store in coalition matrix $Z$
-    \State $synth\_df \gets []$ create empty mask for synthetic data set
-    \For{z in Z.columns}
-        \If {$z\neq [1]^k$}
-            \For{m in M}
-                \State Sample for variables not in coalition
-                \State Compute corresponding model prediction $\hat{C}$
-                \State synth\_df.append($\hat{C}$, $z$)
-            \EndFor
-        \Else
-            \State synth\_df.append($\hat{C_{i}}$, $z$)
-        \EndIf
-    \EndFor
-    \State Fit linear model on synth\_df
-    \State Explain prediction by interpreting the coefficients
-\end{algorithmic}
-\end{algorithm}
-\noindent
 The big advantage of SHAP over the normal computation of shapley values is the ability to efficiently compute the shapley values estimates for all variables at once. Also, with this simplified estimation it is possible to go from local to global interpretations. We shortly describe two methods which can be used to illustrate global effects of variables. \\
 The first method is named SHAP variable importance and is fairly easy to compute. It neglects the direction in which a variable affects the model output, however it is a powerful way of measuring average absolute effects of the variables. This is essantially what is performed to get the desired SHAP variable importance, as we average over the absolte shapley values per variable across the data: \\
 \vspace{5mm}
@@ -808,7 +787,7 @@ The first method is named SHAP variable importance and is fairly easy to compute
 \noindent
 The second method does not rely on any further computation and simply visualizes the shapley values for all variables and for every sample. It is therefore named SHAP summary plot. Eventhough there is no new metric behind its representation of global explanation, the method is still powerful and interpretable. The plot is constructed in a way such that each point represents one shapley value for a variable and a sample. Therefore one axis lists the variables whereas the other corresponds to the shapley value. An additional way to make the resulting plot more interpretable is to add a third dimension, representing the variable value, in form of colours. To get an idea on how SHAPs summary plot looks like we refer to figure \ref{fig:shapsum}. \\
 
-To summarize, we presented methods used in this work to succesfully model the underlying problem of customer churn. This chapter dealt with all steps of the machine learning pipeline, starting with preprocessing the data, dimension reduction and the methods to handle class imbalance. We presented the mathematical and statistical foundations behind the two models, their evaluation and interpretation methods. We are now well equipt, to apply these methods evaluate and compare them to build the best prediction model. \\
+To summarize, we present methods used in this work to succesfully model the underlying problem of customer churn. This chapter deals with all steps of the machine learning pipeline, starting with preprocessing the data, dimension reduction and the methods to handle class imbalance. We illustrate the mathematical and statistical foundations behind the two models, their evaluation and interpretation methods. We are now well equipt, to apply these methods evaluate and compare them to build the best prediction model. \\
 
 \section{Results} \par
 
@@ -1045,7 +1024,7 @@ The SHAP-values of a single prediction also provide a good explanations of how t
 \end{figure}
 \noindent
 In this example, the difference in the average price shown during the requests has the highest contribution to the prediction. This customer also has a young driver registered which also rises the model probability. The fact, that 95\% of the requests belonging to that customer included a different car than the one in his contract, has the third highest contribution. All other variable values only have minor contributions for this example. \\
-This concludes the result presentation of the GBT modelling approach. We presented 9 candidate models, all using different sets of sampling methods, loss functions and explanatory variables. The best model turned out to be the result of an upsampling approach in combination with no cost-sensitive loss-function. The quotation data turned out to have high predictive power for GBT and we used explainability methods to examine the relationship between predicition and the main drivers of the model. In the next section we compare these results with the EBM approach. \\
+This concludes the result presentation of the GBT modelling approach. We present 9 candidate models, all using different sets of sampling methods, loss functions and explanatory variables. The best model turns out to be the result of an upsampling approach in combination with no cost-sensitive loss-function. The quotation data shows to have high predictive power for GBT and we used explainability methods to examine the relationship between prediction and the main drivers of the model. In the next section we compare these results with the EBM approach. \\
 
 \subsubsection*{(ii) Explainable Boosting Machine Results}
 
@@ -1153,11 +1132,12 @@ Eventhough the interaction variables do not show strong contributions on the log
     \label{fig:shape2dim}
 \end{figure}
 \noindent
-To summarize the results for the EBM approach we presented 5 candidate models, all using different sets of sampling methods and explanatory variables. Downsampling the majority class by 50\% and including the best set of quotation variables yielded the best evaluation scores. Plots of individual shape functions enable to easily examine relationships between log odds and variable of interest. Besides confirming preassumptions made for relationships, the plot gave new insights. We are now able to compare both modelling approaches and simulate their improvement over the status quo, when deployed in practice. \\
+To summarize the results for the EBM approach we present 5 candidate models, all using different sets of sampling methods and explanatory variables. Downsampling the majority class by 50\% and including the best set of quotation variables yields the best evaluation scores. Plots of individual shape functions enable to easily examine relationships between log odds and variable of interest. Besides confirming preassumptions made for relationships, the plot give new insights. We are now able to compare both modelling approaches and simulate their improvement over the status quo, when deployed in practice. \\
 
 \subsection{Comparison of GBT and EBM}
 
 The goal of this work is to compare both modelling approaches in two areas. The first criterium is the evaluation (F1-Score, AUPRC) on unseen data. We also emphasize the importance of interpretability and therefore this is the second criterium. We shortly summarize which model of the two best candidates wins in each criterium. \\
+EBM is definitaly more interpretable than the explainability approaches for GBT. The shape function are the exact explanation how a certain variable value leads to a certain increase or decrease in odds. SHAP and PDP only capture estimated relationships of EBM. Eventhough they help to understand the black-box model, they do not and can not represent the exact behavior of the model. So for answering the question on which the main drivers for high/low churn probabilities are, EBM gives more reliable reasonings. This is reflected in the fact that PDP and SHAP could not capture all insights generated with the shape functions of EBM. \\
 Eventhough EBM is not able to capture all higher order interactions relevant for the modelling problem, in our application it reaches a higher F1-Score than the GBT candidate. The AUPRC-metric however belongs to GBT, as it is almost 1.5 times as high for OOS data, for OOP almost 2 times. \\
 The F1-Score surely depends on the selected cutoff $\tau$, which assigns a prediction based on its probability to the two classes. We therefore evaluate Precision, Recall and the resulting F1-Score for both candidates and for 1000 different values of $\tau$ between 0 and 1 in figure \ref{fig:prec_rec_plot}. The lower AUPRC of EBM can be explained by low recalls and precisions for most of $\tau$'s space. The lower F1-Score for GBT however could be caused by $\tau=0.5$ not being the optimal cutoff.
 \begin{figure}[H]
@@ -1209,7 +1189,7 @@ The profit-increase to the status-quo due to the model deployment is therefore:
 \begin{equ}[H]
 \begin{equation} \label{profitinc}
     \begin{aligned}
-        \Delta \Pi(r, \tau) & = \sum_{i=1}^{N^{\hat{C}=1}} p^{prec}p_{i}^{succ}(NPV_{i}-NLV_{i}) - (1-p^{prec})NLV_{i} - K^{RS} \\
+        \Delta \Pi(r, \tau) & = \mathlarger{\sum}_{i=1}^{N^{\hat{C}=1}} p^{prec}p_{i}^{succ}(NPV_{i}-NLV_{i}) - (1-p^{prec})NLV_{i} - K^{RS} \\
         & = N^{\hat{C}=1}(91p^{prec}-12) \\
     \end{aligned}
 \end{equation}
@@ -1238,7 +1218,11 @@ So for our simple simulation the EBM candidate ensures the highest profit increa
 
 \section{Conclusion} \par
 
-DISCUSSION:
+This work presents an applied machine learning approach on a well studied customer churn prediction problem. The emphasize besides high predictive performance is on the predictive power of quotation data on the one hand and interpretability of the modelling approach on the other hand. \\
+For the data set and the problem at hand we give insights on all approaches and steps used to get to the reached results. This includes the data preparation, modelling structure, sampling methods, dimension reduction, cost-sensitive loss-functions, machine learning models, evaluation metrics and interpretability approaches. After following the modelling structure we present two candidate models, one for GBT and one for EBM. Both best candidates are achieved with sampling methods and a simple log loss as the objective. \\
+In this work we show that quotation data has high predictive power. We therefore want to stress the importance of including in it as explanatory variables. We highly recommend companies and institutions to set up data warehouses which capture quotation activity of customers, which can be used to reflect the current behavior of them. To ensure that the predictive power is generalizable for all companies we want to motivate data collection and further research. The goal is to design a benchmark study on multiple independent data sets examining the benefit of quotation data. \\
+
+Furthermore we want to declare one possible extension of this work which contains a different modelling approach. The idea is to model the events giving the customer the right of mid-contract termination seperately. In the tree diagram of figure \ref{fig:tree_diag} we show how the event sequence leading to a churn is constructed. \\
 % Set the overall layout of the tree
 \tikzstyle{level 1}=[level distance=5cm, sibling distance=3cm]
 \tikzstyle{level 2}=[level distance=5cm, sibling distance=2cm]
@@ -1247,7 +1231,7 @@ DISCUSSION:
 \tikzstyle{end} = [circle, minimum width=3pt,fill, inner sep=0pt]
 % The sloped option gives rotated edge labels.
 \noindent
-\begin{figure}
+\begin{figure}[H]
 \begin{tikzpicture}[grow=right, sloped]
 \node[bag] {}
     child {
@@ -1306,8 +1290,7 @@ DISCUSSION:
 \label{fig:tree_diag}
 \end{figure}
 \noindent
-The tree diagram in figure \ref{fig:tree_diag} illustrates how the probability of a churn before the due date can be decomposed using the Events $A$ (Accident), $N$ (New Car) and $C$ (Churn). By assumption we set $P(C\mid None) = 0$ as the amount of terminated contracts during the year which are not being
-caused by a new car, an accident or a due date is very small and can be omitted. Therefore we leave these cases out of our data. What we are interested in predicting is the overall probability of a churn, which can be rewritten as:
+The tree diagram illustrates how the probability of a churn before the due date can be decomposed using the Events $A$ (Accident), $N$ (New Car) and $C$ (Churn). By assumption we set $P(C\mid None) = 0$ as the amount of terminated contracts during the year which are not being caused by a new car, an accident or a due date is very small and can be omitted. What we are interested in predicting is the overall probability of a churn, which can be rewritten as:
 \noindent
 \begin{center}
 \begin{equation} \label{prob_decomb}
@@ -1317,11 +1300,11 @@ caused by a new car, an accident or a due date is very small and can be omitted.
     \end{aligned}
 \end{equation}
 \end{center}
+\vspace{1mm}
 
-\vspace{15mm}
-One possible extension of this work would be to seperately model the event branches enabling mid-contract churn in figure \ref{fig:tree_diag} on page \pageref{fig:tree_diag}. The idea is that the best modelling approaches for an accident ($P(A)$) and for a new car ($P(N)$) in $(t, t+s]$ might differ in terms of models, sets of explanatory variables, sampling methods and so on. Not only the unconditional but also the conditional probabilities $P(C\cap A)$ and $P(C\cap A)$ may vary in their best modelling approach. Predicting these 4 probabilities seperately can also generate more interpretable insights the main drivers for a churn. The probability of a churn can be easily recomputed using these 4 quantites and figure (\ref{fig:tree_diag}) on page \pageref{fig:tree_diag}. \\
+\noindent
+The extension is to seperately model $P(A)$, $P(C\mid A)$, $P(N)$ and $P(C\mid N)$. The best modelling approaches for an accident ($P(A)$) and for a new car ($P(N)$) in $(t, t+s]$ might differ in terms of models, sets of explanatory variables, sampling methods etc. Not only the unconditional but also the conditional probabilities $P(C\cap A)$ and $P(C\cap A)$ may vary in their best modelling approach. Predicting these 4 probabilities seperately can also generate more interpretable insights to the main drivers for a churn. The probability of a churn can be easily recomputed using these 4 quantites and equation (\ref{prob_decomb}). \\
 
-- In conclusion Augmented Intelligence erwähnen? Sagen, dass das Modell nicht alleine entscheiden sollte, sondern nur Entscheidungsunterstützend dient usw.
 \newpage
 
 \thispagestyle{empty}
@@ -1336,7 +1319,113 @@ One possible extension of this work would be to seperately model the event branc
 
 \section*{Appendix} \par
 
-\subsection*{A. GBT Perfomance Improvement with Quotation Data} \par
+\subsection*{A. Gradient and Hessian for Weighted Loss Function} \par
+\vspace*{6mm}
+\noindent
+Simple Weighted Loss Function for one sample:
+\begin{center}
+$l(C, \hat{C}) = -\left(\alpha C\log(\hat{C}) + (1-\alpha)(1 - C)\log(1 - \hat{C})\right)$
+\end{center}
+\noindent
+We perform a few transformations to simplify the derivation:
+\begin{center}
+    $\alpha_j = \begin{cases} \alpha,& C = 1 \\ 1 - \alpha,& C = 0 \end{cases}$\,\,\,\,\,\, ,\,\,\,\,\,\, $\hat{C}_j = \begin{cases} \hat{C},& C = 1 \\ 1 - \hat{C},& C = 0 \end{cases}$
+\end{center}
+\noindent
+This way the loss simplifies to:
+\begin{center}
+    $l(C, \hat{C}) = -\alpha_j \log(\hat{C}_j)$
+\end{center}
+\noindent
+Again, consider following rewriting and note these functional relationships:
+\begin{itemize}
+    \item $\hat{C}_j = \frac{\hat{C}(C+1)}{2} + \frac{(1-\hat{C})(1-C)}{2}$
+    \item $\hat{C} = \frac{1}{1+e^{-g(X)}}$
+\end{itemize}
+\noindent
+The Gradient $\frac{\partial l}{\partial g(X)}$ then can be calculated with the chain rule with:
+\begin{itemize}
+    \item $\frac{\partial l}{\partial \hat{C}_j} = - \frac{\alpha_j}{\hat{C}_j}$
+    \item $\frac{\partial \hat{C}_j}{\partial \hat{C}} = \frac{C+1}{2} + \frac{C-1}{2} = C$
+    \item $\frac{\partial \hat{C}}{\partial g(X)} = \frac{1}{1+e^{-g(X)}}(\frac{1+e^{-g(X)}}{1+e^{-g(X)}} - \frac{1}{1+e^{-g(X)}}) = \hat{C}(1-\hat{C}) = \hat{C_j}(1-\hat{C_j})$
+\end{itemize}
+\begin{center}
+    \boxed{\frac{\partial l}{\partial g(X)} = \frac{\partial l}{\partial \hat{C}_j}\cdot\frac{\partial \hat{C}_j}{\partial \hat{C}}\cdot\frac{\partial \hat{C}}{\partial g(X)} \,\,\, = \,\,\, - \frac{\alpha_j}{\hat{C}_j}\cdot C\cdot\hat{C}_j(1-\hat{C}_j) \,\,\, = \,\,\, -\alpha_jC(1-\hat{C}_j)}
+\end{center}
+\vspace*{6mm}
+\noindent
+The Hessian $\frac{\partial^2 l}{\partial g(X)^2}$ is calculated as:
+\begin{center}
+    \boxed{\frac{\partial^2 l}{\partial g(X)^2} = \frac{\partial}{\partial \hat{C}_j} \left(\frac{\partial l}{\partial g(X)}\right)\cdot\frac{\partial \hat{C}_j}{\partial \hat{C}}\cdot\frac{\partial \hat{C}}{\partial g(X)} \,\,\, = \,\,\, \alpha_jC^2\hat{C}_j(1-\hat{C}_j)}
+\end{center}
+\noindent
+
+\newpage
+
+\thispagestyle{empty}
+
+\section*{Appendix} \par
+
+\subsection*{B. Gradient and Hessian for Focal Loss Function} \par
+\vspace*{6mm}
+\noindent
+Focal Loss Function for one sample:
+\begin{center}
+$l(C, \hat{C}) = -\left(\alpha (1-\hat{C})^{\gamma} C\log(\hat{C}) + (1-\alpha)\hat{C}^{\gamma}(1 - C)\log(1 - \hat{C})\right)$
+\end{center}
+\noindent
+We perform the same transformations to simplify the derivation:
+\begin{center}
+    $\alpha_j = \begin{cases} \alpha,& C = 1 \\ 1 - \alpha,& C = 0 \end{cases}$\,\,\,\,\,\, ,\,\,\,\,\,\, $\hat{C}_j = \begin{cases} \hat{C},& C = 1 \\ 1 - \hat{C},& C = 0 \end{cases}$
+\end{center}
+\noindent
+This way the loss simplifies to:
+\begin{center}
+    $l(C, \hat{C}) = -\alpha_j (1-\hat{C})^{\gamma}\log(\hat{C}_j)$
+\end{center}
+\noindent
+Consider following rewriting and note these functional relationships:
+\begin{itemize}
+    \item $\hat{C}_j = \frac{\hat{C}(C+1)}{2} + \frac{(1-\hat{C})(1-C)}{2}$
+    \item $\hat{C} = \frac{1}{1+e^{-g(X)}}$
+\end{itemize}
+\noindent
+The Gradient $\frac{\partial l}{\partial g(X)}$ then can be calculated with the chain rule with:
+\begin{itemize}
+    \item $\frac{\partial l}{\partial \hat{C}_j} = \alpha_j(1-\hat{C}_j)^{\gamma} \left(\frac{\hat{C}_j\log(\hat{C}_j)^\gamma + \hat{C}_j - 1}{\hat{C}_j(1-\hat{C}_j)}\right)$
+    \item $\frac{\partial \hat{C}_j}{\partial \hat{C}} = \frac{C+1}{2} + \frac{C-1}{2} = C$
+    \item $\frac{\partial \hat{C}}{\partial g(X)} = \frac{1}{1+e^{-g(X)}}(\frac{1+e^{-g(X)}}{1+e^{-g(X)}} - \frac{1}{1+e^{-g(X)}}) = \hat{C}(1-\hat{C}) = \hat{C_j}(1-\hat{C_j})$
+\end{itemize}
+\begin{center}
+    \boxed{\frac{\partial l}{\partial g(X)} = \frac{\partial l}{\partial \hat{C}_j}\cdot\frac{\partial \hat{C}_j}{\partial \hat{C}}\cdot\frac{\partial \hat{C}}{\partial g(X)} \,\,\, = \,\,\, - \alpha_j(1-\hat{C}_j)^{\gamma} \left(\hat{C}_j\log(\hat{C}_j)^\gamma + \hat{C}_j - 1\right) C}
+\end{center}
+\vspace*{6mm}
+\noindent
+The Hessian $\frac{\partial^2 l}{\partial g(X)^2}$ is calculated as:
+\begin{center}
+    \fbox{%
+        \parbox{\textwidth}{
+            \centering
+            $\mathlarger{\frac{\partial^2 l}{\partial g(X)^2} = \frac{\partial}{\partial \hat{C}_j} \left(\frac{\partial l}{\partial g(X)}\right)\cdot\frac{\partial \hat{C}_j}{\partial \hat{C}}\cdot\frac{\partial \hat{C}}{\partial g(X)} =}$ \\
+            \vspace*{2mm}
+
+            $\left(\alpha_j C \gamma (1-\hat{C}_j)^{g-1}\left(\gamma \hat{C}_j \log(\hat{C}_j) + \hat{C}_j - 1 \right)\right)C\hat{C}_j(1-\hat{C}_j) +$ \\
+            \vspace*{2mm}
+
+            $\left(\alpha_j C (1-\hat{C}_j)^{\gamma}\left(\gamma\log(\hat{C}_j) + \gamma + 1\right)\right)C\hat{C}_j(1-\hat{C}_j)$
+        }%
+    }
+\end{center}
+\noindent
+
+
+\newpage
+
+\thispagestyle{empty}
+
+\section*{Appendix} \par
+
+\subsection*{C. GBT Perfomance Improvement with Quotation Data} \par
 
 \begin{table}[h!]
     \centering
@@ -1391,7 +1480,7 @@ One possible extension of this work would be to seperately model the event branc
 
 \section*{Appendix} \par
 
-\subsection*{B. EBM Perfomance Improvement with Quotation Data} \par
+\subsection*{D. EBM Perfomance Improvement with Quotation Data} \par
 
 \begin{table}[h!]
     \centering
