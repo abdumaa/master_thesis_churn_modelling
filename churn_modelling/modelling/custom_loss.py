@@ -4,7 +4,7 @@ from scipy import special
 
 
 class FocalLoss:
-    """Class for custom objective loss function implementation."""
+    """Class for Focal loss function implementation."""
 
     def __init__(self, gamma, alpha=None):
         self.alpha = alpha
@@ -84,11 +84,11 @@ class FocalLoss:
 
 
 class WeightedLoss:
-    """Class for custom objective loss function implementation."""
+    """Class for Weighted loss function implementation."""
 
-    def __init__(self, weight_maj, weight_min):
-        self.weight_maj = weight_maj
-        self.weight_min = weight_min
+    def __init__(self, alpha):
+        self.weight_maj = alpha
+        self.weight_min = 1 - alpha
 
     def wt(self, y):
         """Compute weight vector wt."""

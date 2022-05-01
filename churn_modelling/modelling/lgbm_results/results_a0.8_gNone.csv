@@ -1,0 +1,81 @@
+,sampling,dr_method,features_after_dr,loss,model,Accuracy_OOS,Precision_OOS,Recall_OOS,F1_Score_OOS,AUROC_OOS,AUPRC_OOS,Accuracy_OOP,Precision_OOP,Recall_OOP,F1_Score_OOP,AUROC_OOP,AUPRC_OOP,path
+gbt_up3_best_quot_a0.8_gNone,up3: balanced,best_quot,"['n_requests_1', 'diff_avg_vjnbe_requests_3', 'other_hsntsn_requests_3', 'diff_n_requests_3', 'n_accident', 'sum_accident_cost', 'vehicle_age', 'diff_car_holder', 'contract_age_months', 'age_contract_holder', 'age_youngest_driver', 'years_driving_license', 'churn']","{'alpha': 0.8, 'gamma': None}","LGBMClassifier(colsample_bytree=0.9445188747128472, min_child_samples=161,
+               min_child_weight=10.0, n_estimators=1000, num_leaves=49,
+               objective='binary', random_state=16, reg_alpha=0, reg_lambda=5,
+               scale_pos_weight=4.000000000000001,
+               subsample=0.7440554579432059)",0.8487,0.04865556978233035,0.7378640776699029,0.0912912912912913,0.8746133721015783,0.29718706302267545,0.8378,0.044215626892792244,0.6239316239316239,0.08257918552036199,0.8251050106761935,0.19231440055460952,/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_gbt_up3_best_quot_a0.8_gNone.joblib
+gbt_smote_best_quot_a0.8_gNone,smote: True,best_quot,"['n_requests_1', 'diff_avg_vjnbe_requests_3', 'diff_n_requests_1', 'other_hsntsn_requests_3', 'n_accident', 'sum_accident_cost', 'vehicle_age', 'diff_car_holder', 'contract_age_months', 'age_contract_holder', 'age_youngest_driver', 'years_driving_license', 'churn']","{'alpha': 0.8, 'gamma': None}","LGBMClassifier(colsample_bytree=0.9445188747128472, min_child_samples=161,
+               min_child_weight=10.0, n_estimators=1000, num_leaves=49,
+               objective='binary', random_state=16, reg_alpha=0, reg_lambda=5,
+               scale_pos_weight=4.000000000000001,
+               subsample=0.7440554579432059)",0.8401,0.04390243902439024,0.6990291262135923,0.08261617900172116,0.867594475525093,0.2314317862965221,0.8334,0.04090100770598696,0.5897435897435898,0.07649667405764968,0.8075189114347264,0.14282982670432026,/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_gbt_smote_best_quot_a0.8_gNone.joblib
+gbt_down3_best_quot_a0.8_gNone,down3: balanced,best_quot,"['n_requests_1', 'other_hsntsn_requests_3', 'diff_avg_vjnbe_requests_3', 'diff_n_requests_3', 'n_accident', 'sum_accident_cost', 'vehicle_age', 'diff_car_holder', 'contract_age_months', 'age_contract_holder', 'age_youngest_driver', 'years_driving_license', 'churn']","{'alpha': 0.8, 'gamma': None}","LGBMClassifier(colsample_bytree=0.8817856556865005, min_child_samples=258,
+               min_child_weight=1e-05, n_estimators=1000, num_leaves=24,
+               objective='binary', random_state=16, reg_alpha=100, reg_lambda=0,
+               scale_pos_weight=4.000000000000001,
+               subsample=0.7382088281408952)",0.617,0.023523395551009973,0.8932038834951457,0.045839561534628794,0.7536646880343264,0.02211118825915454,0.6079,0.0245,0.8376068376068376,0.047607481175613316,0.7213937253904876,0.022421367521367523,/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_gbt_down3_best_quot_a0.8_gNone.joblib
+gbt_smote_no_quot_a0.8_gNone,smote: True,no_quot,"['n_accident', 'sum_accident_cost', 'vehicle_age', 'diff_car_holder', 'contract_age_months', 'age_contract_holder', 'age_youngest_driver', 'years_driving_license', 'churn']","{'alpha': 0.8, 'gamma': None}","LGBMClassifier(colsample_bytree=0.9445188747128472, min_child_samples=161,
+               min_child_weight=10.0, n_estimators=1000, num_leaves=49,
+               objective='binary', random_state=16, reg_alpha=0, reg_lambda=5,
+               scale_pos_weight=4.000000000000001,
+               subsample=0.7440554579432059)",0.6017,0.021696252465483234,0.8543689320388349,0.04231786487136331,0.8276407188213355,0.05028773316384523,0.5941,0.02391304347826087,0.8461538461538461,0.046511627906976744,0.7908395751661967,0.037542964441854475,/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_gbt_smote_no_quot_a0.8_gNone.joblib
+gbt_up3_no_quot_a0.8_gNone,up3: balanced,no_quot,"['n_accident', 'sum_accident_cost', 'vehicle_age', 'diff_car_holder', 'contract_age_months', 'age_contract_holder', 'age_youngest_driver', 'years_driving_license', 'churn']","{'alpha': 0.8, 'gamma': None}","LGBMClassifier(colsample_bytree=0.9445188747128472, min_child_samples=161,
+               min_child_weight=10.0, n_estimators=1000, num_leaves=49,
+               objective='binary', random_state=16, reg_alpha=0, reg_lambda=5,
+               scale_pos_weight=4.000000000000001,
+               subsample=0.7440554579432059)",0.5461,0.020121159671138037,0.9029126213592233,0.03936507936507937,0.8405042814778627,0.05398362092074373,0.541,0.022217474898525956,0.8888888888888888,0.04335139641517299,0.8136647493624121,0.044534852541720196,/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_gbt_up3_no_quot_a0.8_gNone.joblib
+gbt_down3_no_quot_a0.8_gNone,down3: balanced,no_quot,"['n_accident', 'sum_accident_cost', 'vehicle_age', 'diff_car_holder', 'contract_age_months', 'age_contract_holder', 'age_youngest_driver', 'years_driving_license', 'churn']","{'alpha': 0.8, 'gamma': None}","LGBMClassifier(colsample_bytree=0.7365192580575227, min_child_samples=276,
+               min_child_weight=0.01, n_estimators=1000, num_leaves=48,
+               objective='binary', random_state=16, reg_alpha=100,
+               reg_lambda=10, scale_pos_weight=4.000000000000001,
+               subsample=0.7210413581312767)",0.3975,0.013793103448275862,0.8155339805825242,0.027127401905377036,0.6043417099032657,0.013148744559758955,0.3943,0.016129032258064516,0.8461538461538461,0.031654676258992806,0.6175522848091906,0.015447642679900743,/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_gbt_down3_no_quot_a0.8_gNone.joblib
+gbt_none_no_quot_a0.8_gNone,none: True,no_quot,"['n_accident', 'sum_accident_cost', 'vehicle_age', 'diff_car_holder', 'contract_age_months', 'age_contract_holder', 'age_youngest_driver', 'years_driving_license', 'churn']","{'alpha': 0.8, 'gamma': None}","LGBMClassifier(colsample_bytree=0.6893164316614155, min_child_samples=221,
+               min_child_weight=10000.0, n_estimators=1000, num_leaves=7,
+               objective='binary', random_state=16, reg_alpha=10,
+               reg_lambda=100, scale_pos_weight=4.000000000000001,
+               subsample=0.4835167439016499)",0.9897,0.0,0.0,0.0,0.5,0.0103,0.9883,0.0,0.0,0.0,0.5,0.0117,/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_gbt_none_no_quot_a0.8_gNone.joblib
+gbt_none_best_quot_a0.8_gNone,none: True,best_quot,"['n_accident', 'sum_accident_cost', 'vehicle_age', 'diff_car_holder', 'contract_age_months', 'age_contract_holder', 'age_youngest_driver', 'years_driving_license', 'churn']","{'alpha': 0.8, 'gamma': None}","LGBMClassifier(colsample_bytree=0.6893164316614155, min_child_samples=221,
+               min_child_weight=10000.0, n_estimators=1000, num_leaves=7,
+               objective='binary', random_state=16, reg_alpha=10,
+               reg_lambda=100, scale_pos_weight=4.000000000000001,
+               subsample=0.4835167439016499)",0.9897,0.0,0.0,0.0,0.5,0.0103,0.9883,0.0,0.0,0.0,0.5,0.0117,/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_gbt_none_best_quot_a0.8_gNone.joblib
+gbt_down1_no_quot_a0.8_gNone,down1: 0.1,no_quot,"['n_accident', 'sum_accident_cost', 'vehicle_age', 'diff_car_holder', 'contract_age_months', 'age_contract_holder', 'age_youngest_driver', 'years_driving_license', 'churn']","{'alpha': 0.8, 'gamma': None}","LGBMClassifier(colsample_bytree=0.6893164316614155, min_child_samples=221,
+               min_child_weight=10000.0, n_estimators=1000, num_leaves=7,
+               objective='binary', random_state=16, reg_alpha=10,
+               reg_lambda=100, scale_pos_weight=4.000000000000001,
+               subsample=0.4835167439016499)",0.9897,0.0,0.0,0.0,0.5,0.0103,0.9883,0.0,0.0,0.0,0.5,0.0117,/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_gbt_down1_no_quot_a0.8_gNone.joblib
+gbt_down1_best_quot_a0.8_gNone,down1: 0.1,best_quot,"['n_requests_1', 'diff_n_requests_2', 'diff_avg_vjnbe_requests_3', 'other_hsntsn_requests_3', 'n_accident', 'sum_accident_cost', 'vehicle_age', 'diff_car_holder', 'contract_age_months', 'age_contract_holder', 'age_youngest_driver', 'years_driving_license', 'churn']","{'alpha': 0.8, 'gamma': None}","LGBMClassifier(colsample_bytree=0.6893164316614155, min_child_samples=221,
+               min_child_weight=10000.0, n_estimators=1000, num_leaves=7,
+               objective='binary', random_state=16, reg_alpha=10,
+               reg_lambda=100, scale_pos_weight=4.000000000000001,
+               subsample=0.4835167439016499)",0.9897,0.0,0.0,0.0,0.5,0.0103,0.9883,0.0,0.0,0.0,0.5,0.0117,/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_gbt_down1_best_quot_a0.8_gNone.joblib
+gbt_down2_no_quot_a0.8_gNone,down2: 0.5,no_quot,"['n_accident', 'sum_accident_cost', 'vehicle_age', 'diff_car_holder', 'contract_age_months', 'age_contract_holder', 'age_youngest_driver', 'years_driving_license', 'churn']","{'alpha': 0.8, 'gamma': None}","LGBMClassifier(colsample_bytree=0.6893164316614155, min_child_samples=221,
+               min_child_weight=10000.0, n_estimators=1000, num_leaves=7,
+               objective='binary', random_state=16, reg_alpha=10,
+               reg_lambda=100, scale_pos_weight=4.000000000000001,
+               subsample=0.4835167439016499)",0.9897,0.0,0.0,0.0,0.5,0.0103,0.9883,0.0,0.0,0.0,0.5,0.0117,/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_gbt_down2_no_quot_a0.8_gNone.joblib
+gbt_down2_best_quot_a0.8_gNone,down2: 0.5,best_quot,"['n_accident', 'sum_accident_cost', 'vehicle_age', 'diff_car_holder', 'contract_age_months', 'age_contract_holder', 'age_youngest_driver', 'years_driving_license', 'churn']","{'alpha': 0.8, 'gamma': None}","LGBMClassifier(colsample_bytree=0.6893164316614155, min_child_samples=221,
+               min_child_weight=10000.0, n_estimators=1000, num_leaves=7,
+               objective='binary', random_state=16, reg_alpha=10,
+               reg_lambda=100, scale_pos_weight=4.000000000000001,
+               subsample=0.4835167439016499)",0.9897,0.0,0.0,0.0,0.5,0.0103,0.9883,0.0,0.0,0.0,0.5,0.0117,/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_gbt_down2_best_quot_a0.8_gNone.joblib
+gbt_up1_no_quot_a0.8_gNone,up1: 10,no_quot,"['n_accident', 'sum_accident_cost', 'vehicle_age', 'diff_car_holder', 'contract_age_months', 'age_contract_holder', 'age_youngest_driver', 'years_driving_license', 'churn']","{'alpha': 0.8, 'gamma': None}","LGBMClassifier(colsample_bytree=0.6893164316614155, min_child_samples=221,
+               min_child_weight=10000.0, n_estimators=1000, num_leaves=7,
+               objective='binary', random_state=16, reg_alpha=10,
+               reg_lambda=100, scale_pos_weight=4.000000000000001,
+               subsample=0.4835167439016499)",0.9897,0.0,0.0,0.0,0.5,0.0103,0.9883,0.0,0.0,0.0,0.5,0.0117,/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_gbt_up1_no_quot_a0.8_gNone.joblib
+gbt_up1_best_quot_a0.8_gNone,up1: 10,best_quot,"['n_requests_1', 'diff_avg_vjnbe_requests_3', 'diff_n_requests_3', 'other_hsntsn_requests_3', 'n_accident', 'sum_accident_cost', 'vehicle_age', 'diff_car_holder', 'contract_age_months', 'age_contract_holder', 'age_youngest_driver', 'years_driving_license', 'churn']","{'alpha': 0.8, 'gamma': None}","LGBMClassifier(colsample_bytree=0.6893164316614155, min_child_samples=221,
+               min_child_weight=10000.0, n_estimators=1000, num_leaves=7,
+               objective='binary', random_state=16, reg_alpha=10,
+               reg_lambda=100, scale_pos_weight=4.000000000000001,
+               subsample=0.4835167439016499)",0.9897,0.0,0.0,0.0,0.5,0.0103,0.9883,0.0,0.0,0.0,0.5,0.0117,/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_gbt_up1_best_quot_a0.8_gNone.joblib
+gbt_up2_no_quot_a0.8_gNone,up2: 50,no_quot,"['n_accident', 'sum_accident_cost', 'vehicle_age', 'diff_car_holder', 'contract_age_months', 'age_contract_holder', 'age_youngest_driver', 'years_driving_license', 'churn']","{'alpha': 0.8, 'gamma': None}","LGBMClassifier(colsample_bytree=0.6893164316614155, min_child_samples=221,
+               min_child_weight=10000.0, n_estimators=1000, num_leaves=7,
+               objective='binary', random_state=16, reg_alpha=10,
+               reg_lambda=100, scale_pos_weight=4.000000000000001,
+               subsample=0.4835167439016499)",0.9897,0.0,0.0,0.0,0.6681842394135322,0.018914354122208484,0.9883,0.0,0.0,0.0,0.656805565284772,0.020521430777524354,/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_gbt_up2_no_quot_a0.8_gNone.joblib
+gbt_up2_best_quot_a0.8_gNone,up2: 50,best_quot,"['n_requests_1', 'diff_avg_vjnbe_requests_3', 'other_hsntsn_requests_3', 'diff_n_requests_3', 'n_accident', 'sum_accident_cost', 'vehicle_age', 'diff_car_holder', 'contract_age_months', 'age_contract_holder', 'age_youngest_driver', 'years_driving_license', 'churn']","{'alpha': 0.8, 'gamma': None}","LGBMClassifier(colsample_bytree=0.6893164316614155, min_child_samples=221,
+               min_child_weight=10000.0, n_estimators=1000, num_leaves=7,
+               objective='binary', random_state=16, reg_alpha=10,
+               reg_lambda=100, scale_pos_weight=4.000000000000001,
+               subsample=0.4835167439016499)",0.9897,0.0,0.0,0.0,0.8201965683432559,0.048672629867072915,0.9883,0.0,0.0,0.0,0.7673285993128147,0.033944070325975344,/Users/abdumaa/Desktop/Uni_Abdu/Master/Masterarbeit/master_thesis_churn_modelling/churn_modelling/modelling/lgbm_fits/lgbm_fit_gbt_up2_best_quot_a0.8_gNone.joblib
