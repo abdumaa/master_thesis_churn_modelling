@@ -2,7 +2,6 @@ import pandas as pd
 
 import numpy as np
 import ast
-from datetime import datetime
 import glob
 import os
 from joblib import dump, load
@@ -27,7 +26,7 @@ from churn_modelling.preprocessing.splitting import split_train_test
 from churn_modelling.preprocessing.resample import resample
 from churn_modelling.preprocessing.mrmr import mrmr
 from churn_modelling.utils.mem_usage import reduce_mem_usage
-from .utils import split_quotation_fix_features, get_featureset_from_fit
+from churn_modelling.modelling.utils import split_quotation_fix_features, get_featureset_from_fit
 
 empty_df = pd.DataFrame()
 

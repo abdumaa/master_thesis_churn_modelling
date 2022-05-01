@@ -4,7 +4,7 @@ import lightgbm as lgb
 from sklearn.model_selection import cross_validate
 import scipy.stats as ss
 from itertools import combinations_with_replacement, product
-from .categorical import to_categorical
+from churn_modelling.preprocessing.categorical import to_categorical
 
 
 def _lgbm_scorer(
